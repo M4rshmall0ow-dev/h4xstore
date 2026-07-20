@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H4xStore - The Quintessential Experience</title>
+    <!-- AFFILIATE TRACKING SYNC -->
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        localStorage.setItem('h4x_affiliate_ref', ref);
+      }
+    })();
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  
+  <script src="store-state.js"></script>
+  <script src="auth.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    const savedTheme = localStorage.getItem('h4x_theme') || 'red';
+    if (savedTheme !== 'red') {
+      document.documentElement.classList.add(`theme-${savedTheme}`);
+    }
+
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Lato"', '"Rajdhani"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            fantasy: ['"Cinzel Decorative"', 'serif'],
+            tech: ['"Rajdhani"', 'sans-serif'],
+          },
+          colors: {
+            primary: 'rgb(var(--primary-rgb) / <alpha-value>)',
+            'primary-dark': 'rgb(var(--primary-dark-rgb) / <alpha-value>)',
+            'primary-light': 'rgb(var(--primary-light-rgb) / <alpha-value>)',
+            'deep-black': '#000000',
+            'midnight': '#080808',
+          },
+          animation: {
+            'float': 'float 8s ease-in-out infinite',
+            'float-slow': 'floatSlow 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 15s linear infinite',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'gradient-x': 'gradientX 5s ease infinite',
+            'blob': 'blob 7s infinite',
+          },
+          keyframes: {
+            float: { '0%, 100%': { transform: 'translateY(0) rotate(0deg)' }, '50%': { transform: 'translateY(-20px) rotate(1deg)' } },
+            floatSlow: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-15px)' } },
+            shimmer: { '0%': { backgroundPosition: '-1000px 0' }, '100%': { backgroundPosition: '1000px 0' } },
+            popIn: { '0%': { opacity: '0', transform: 'scale(0.5)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(40px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            gradientX: { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } },
+            blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { --primary-rgb: 255 26 26; --primary-dark-rgb: 153 0 0; --primary-light-rgb: 255 77 77; --bg-dark: #000000; --mouse-x: -999px; --mouse-y: -999px; }
+    html.theme-green { --primary-rgb: 16 185 129; --primary-dark-rgb: 6 95 70; --primary-light-rgb: 52 211 153; }
+    html.theme-purple { --primary-rgb: 217 70 239; --primary-dark-rgb: 134 25 143; --primary-light-rgb: 232 121 249; }
+    html.theme-yellow { --primary-rgb: 234 179 8; --primary-dark-rgb: 133 77 14; --primary-light-rgb: 250 204 21; }
+    html.theme-blue { --primary-rgb: 59 130 246; --primary-dark-rgb: 30 58 138; --primary-light-rgb: 96 165 250; }
+
+    body { background: linear-gradient(135deg, #000000 0%, #050505 50%, #0d0101 100%); color: #E2E8F0; font-family: 'Lato', 'Rajdhani', sans-serif; overflow-x: hidden; min-height: 100vh; }
+    ::selection { background-color: rgb(var(--primary-rgb)); color: white; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: rgb(var(--primary-dark-rgb)); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgb(var(--primary-rgb)); }
+
+    #scroll-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(to right, rgb(var(--primary-rgb)), #ffffff, rgb(var(--primary-light-rgb))); z-index: 99999; width: 0%; transition: width 0.1s ease-out; box-shadow: 0 0 15px rgb(var(--primary-rgb)); will-change: width; }
+    .mouse-spotlight { position: fixed; top: 0; left: 0; width: 1200px; height: 1200px; margin-left: -600px; margin-top: -600px; pointer-events: none; z-index: 1; background: radial-gradient(circle, rgba(var(--primary-rgb), 0.06) 0%, transparent 60%); will-change: transform; transform: translate3d(var(--mouse-x), var(--mouse-y), 0); }
+
+    #preloader { position: fixed; inset: 0; background: #000000; z-index: 100000; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease-out, visibility 0.8s; }
+    .loader-content { text-align: center; }
+    .loader-text { font-family: 'Cinzel Decorative', cursive; font-size: 4rem; background: linear-gradient(to right, rgb(var(--primary-rgb)), #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; filter: drop-shadow(0 0 15px rgb(var(--primary-rgb) / 0.6)); }
+    .loader-line { width: 0; height: 3px; background: rgb(var(--primary-rgb)); margin: 15px auto; border-radius: 10px; animation: widthFull 1.5s ease-in-out forwards; box-shadow: 0 0 20px rgb(var(--primary-rgb)); }
+    @keyframes widthFull { to { width: 100%; } }
+
+    .tech-card, .glass-card { background: rgba(5, 5, 5, 0.35); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgb(var(--primary-rgb) / 0.25); border-top: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7), inset 0 0 25px rgb(var(--primary-rgb) / 0.03); transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s, background-color 0.4s; will-change: transform; }
+    .tech-card:hover, .glass-card:hover { background: rgba(12, 5, 5, 0.5); border-color: rgb(var(--primary-rgb) / 0.7); box-shadow: 0 30px 60px -5px rgba(0, 0, 0, 0.95), 0 0 35px rgb(var(--primary-rgb) / 0.35); transform: translateY(-10px) scale(1.02); }
+
+    .shimmer-badge { background: linear-gradient(90deg, rgb(var(--primary-rgb) / 0.25) 0%, rgba(255,255,255,0.4) 50%, rgb(var(--primary-rgb) / 0.25) 100%); background-size: 1000px 100%; animation: shimmer 3s infinite linear; }
+    .text-gradient-magic { background: linear-gradient(-45deg, rgb(var(--primary-rgb)), #ffffff, rgb(var(--primary-light-rgb)), rgb(var(--primary-dark-rgb))); background-size: 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradientX 4s ease infinite; will-change: background-position; }
+
+    @keyframes moveGrid { 0% { background-position: 0 0; } 100% { background-position: 0 4rem; } }
+    @keyframes particle-drift { 0% { transform: translateY(110vh) translateX(0) scale(0) rotate(0deg) translateZ(0); opacity: 0; } 20% { opacity: 0.6; transform: translateY(80vh) translateX(20px) scale(1) rotate(45deg) translateZ(0); } 80% { opacity: 0.6; } 100% { transform: translateY(-20vh) translateX(-20px) scale(0.5) rotate(180deg) translateZ(0); opacity: 0; } }
+    @keyframes flower-drift { 0% { transform: translateY(110vh) translateX(0) rotate(0deg) translateZ(0); opacity: 0; } 10% { opacity: var(--max-opacity, 0.5); } 90% { opacity: var(--max-opacity, 0.5); } 100% { transform: translateY(-15vh) translateX(var(--sway-x, 80px)) rotate(var(--rotations, 360deg)) translateZ(0); opacity: 0; } }
+
+    .floating-flower { position: absolute; animation: flower-drift var(--drift-duration, 16s) linear infinite; color: rgb(var(--primary-rgb) / 0.45); pointer-events: none; z-index: 1; will-change: transform, opacity; transform: translateZ(0); }
+    .scanlines { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3)); background-size: 100% 4px; pointer-events: none; }
+    .particle { position: absolute; background: rgb(var(--primary-rgb)); border-radius: 50%; box-shadow: 0 0 10px rgb(var(--primary-rgb)), 0 0 20px rgb(var(--primary-rgb)); animation: particle-drift linear infinite; will-change: transform, opacity; }
+    .floating-shape { position: absolute; background: transparent; border: 1px solid rgb(var(--primary-rgb) / 0.3); animation: particle-drift linear infinite; will-change: transform, opacity; }
+
+    .aurora-blob { position: absolute; border-radius: 50%; opacity: 0.35; animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1); z-index: -2; mix-blend-mode: screen; will-change: transform; transform: translateZ(0); }
+    .blob-primary { background: radial-gradient(circle, rgba(var(--primary-rgb), 1) 0%, transparent 60%); }
+    .blob-dark { background: radial-gradient(circle, rgba(var(--primary-dark-rgb), 1) 0%, transparent 60%); }
+    .blob-neutral { background: radial-gradient(circle, rgba(50, 50, 50, 1) 0%, transparent 60%); }
+
+    .reveal { opacity: 0; transform: translateY(50px) scale(0.95); filter: blur(8px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform, opacity; }
+    .reveal.active { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+
+    .corner-bracket { position: absolute; width: 14px; height: 14px; border-color: rgb(var(--primary-rgb) / 0.8); border-style: solid; pointer-events: none; transition: all 0.3s ease; z-index: 20; }
+    .tech-card:hover .corner-bracket { border-color: rgb(var(--primary-light-rgb)); width: 20px; height: 20px; filter: drop-shadow(0 0 8px rgb(var(--primary-rgb))); }
+    .cb-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; border-top-left-radius: 8px; }
+    .cb-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; border-top-right-radius: 8px; }
+    .cb-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; border-bottom-left-radius: 8px; }
+    .cb-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; border-bottom-right-radius: 8px; }
+
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; opacity: 0; }
+    .faq-item.active .faq-answer { max-height: 300px; opacity: 1; }
+    .faq-item.active .faq-icon { transform: rotate(180deg); color: rgb(var(--primary-rgb)); }
+
+    .tab-btn.active { background: rgb(var(--primary-rgb)); color: #ffffff; box-shadow: 0 0 25px rgb(var(--primary-rgb) / 0.7); border-color: #ffffff; }
+    .gpu-accel { transform: translateZ(0); backface-visibility: hidden; }
+    .bg-layer-contain { contain: strict; }
+  </style>
+</head>
+<body class="min-h-screen pb-20 relative overflow-x-hidden selection:bg-primary selection:text-white antialiased">
+
+  <div id="scroll-progress"></div>
+  <div class="mouse-spotlight"></div>
+
+  <!-- preloader -->
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-text drop-shadow-[0_0_20px_rgb(var(--primary-rgb))]">H4xStore</div>
+      <div class="loader-line"></div>
+      <div class="font-tech text-xs tracking-[0.4em] uppercase text-zinc-500 animate-pulse mt-2">Loading Please Wait...</div>
+    </div>
+  </div>
+
+  <!-- Background Layer -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000] bg-layer-contain">
+    <div class="absolute inset-0 z-10 scanlines opacity-40"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,rgba(var(--primary-rgb),0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(var(--primary-rgb),0.1)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_80%,transparent_100%)] opacity-40 will-change-[background-position]" style="animation: moveGrid 3s linear infinite"></div>
+    <div id="flower-container" class="absolute inset-0 w-full h-full pointer-events-none z-[2]"></div>
+
+    <div class="aurora-blob blob-dark w-[600px] h-[600px] top-[-100px] left-[-100px] animate-blob"></div>
+    <div class="aurora-blob blob-neutral w-[600px] h-[600px] top-[-100px] right-[-100px] animate-blob" style="animation-delay: 2s"></div>
+    <div class="aurora-blob blob-dark w-[600px] h-[600px] bottom-[-100px] left-[50px] animate-blob" style="animation-delay: 4s"></div>
+    <div class="aurora-blob blob-primary w-[600px] h-[600px] bottom-[-100px] right-[100px] animate-blob" style="animation-delay: 6s"></div>
+
+    <div class="particle w-1 h-1 left-[10%]" style="animation-duration: 15s; animation-delay: 0s;"></div>
+    <div class="particle w-2 h-2 left-[30%]" style="animation-duration: 12s; animation-delay: 4s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[60%]" style="animation-duration: 18s; animation-delay: 2s;"></div>
+    <div class="particle w-1 h-1 left-[85%]" style="animation-duration: 14s; animation-delay: 7s;"></div>
+    <div class="floating-shape w-8 h-8 rounded-none border-primary/40 left-[25%]" style="animation-duration: 25s; animation-delay: 3s;"></div>
+    <div class="floating-shape w-12 h-12 rounded-full border-white/20 left-[75%]" style="animation-duration: 28s; animation-delay: 6s;"></div>
+  </div>
+
+  <div class="fixed left-6 top-1/3 -translate-y-1/2 z-10 hidden xl:flex flex-col items-center gap-1 select-none pointer-events-none opacity-[0.14] hover:opacity-40 transition-opacity duration-500 gpu-accel">
+    <span class="font-fantasy text-8xl text-white tracking-widest leading-none rotate-180" style="writing-mode: vertical-rl;">五等分</span>
+    <div class="w-1.5 h-36 bg-gradient-to-b from-primary via-white/50 to-transparent mt-4 rounded-full shadow-[0_0_10px_rgb(var(--primary-rgb))] animate-pulse"></div>
+  </div>
+  <div class="fixed right-24 top-1/3 -translate-y-1/2 z-10 hidden xl:flex flex-col items-center gap-1 select-none pointer-events-none opacity-[0.14] hover:opacity-40 transition-opacity duration-500 gpu-accel">
+    <span class="font-fantasy text-8xl text-white tracking-widest leading-none" style="writing-mode: vertical-rl;">の花嫁</span>
+    <div class="w-1.5 h-36 bg-gradient-to-b from-transparent via-white/50 to-primary mt-4 rounded-full shadow-[0_0_10px_rgb(var(--primary-rgb))] animate-pulse"></div>
+  </div>
+
+  <div id="left-anime" class="fixed bottom-0 left-0 z-[45] transition-all duration-[1500ms] ease-out -translate-x-full opacity-0 pointer-events-none drop-shadow-[0_0_40px_rgb(var(--primary-rgb)/0.8)] gpu-accel"
+       style="animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; will-change: transform, opacity;">
+    <img 
+      id="anime-character"
+      src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image2.png" 
+      alt="Anime Girl" 
+      loading="lazy"
+      class="h-[55vh] md:h-[75vh] w-auto max-w-[45vw] object-contain [mask-image:linear-gradient(to_top,transparent_0%,black_15%)] animate-float-slow cursor-pointer pointer-events-auto transition-opacity duration-300"
+    />
+    <div class="absolute bottom-6 left-6 md:left-10 z-[50] glass-card px-5 py-3 rounded-2xl border border-primary/40 shadow-[0_0_20px_rgb(var(--primary-rgb)/0.4)] transition-all duration-500 hover:scale-105 pointer-events-auto flex items-center gap-3 backdrop-blur-2xl">
+      <div class="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_10px_rgb(var(--primary-rgb))] animate-pulse"></div>
+      <div class="flex flex-col">
+        <span id="anime-name" class="font-fantasy font-black text-white text-lg md:text-xl uppercase tracking-widest drop-shadow-[0_0_8px_rgb(var(--primary-rgb)/0.8)]">Itsuki Nakano</span>
+        <span class="font-tech font-bold text-[10px] md:text-xs text-zinc-400 uppercase tracking-[0.2em]">The Quintessential Quintuplets</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed right-4 top-1/2 -translate-y-1/2 z-[65] flex flex-col items-center gap-3 glass-card py-5 px-3 rounded-[2.5rem] border border-white/10 shadow-[0_0_35px_rgba(0,0,0,0.9)] backdrop-blur-xl reveal delay-500 gpu-accel">
+    <div class="text-[9px] font-fantasy font-bold text-zinc-300 uppercase tracking-widest mb-1 rotate-180" style="writing-mode: vertical-rl;">Themes</div>
+    <div class="w-full h-px bg-white/10 mb-2"></div>
+    <button onclick="setTheme('red')" data-theme="red" class="theme-btn w-10 h-10 rounded-full bg-[#ff1a1a] shadow-[0_0_15px_#ff1a1a] border-2 border-white/80 scale-110 hover:scale-110 transition-all flex items-center justify-center relative group" title="Itsuki (Red)">
+      <span class="absolute right-14 bg-black/80 backdrop-blur-md text-white text-xs font-tech px-3 py-1.5 rounded-lg border border-[#ff1a1a]/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_10px_#ff1a1a]">Itsuki Nakano</span>
+    </button>
+    <button onclick="setTheme('green')" data-theme="green" class="theme-btn w-10 h-10 rounded-full bg-[#10b981] shadow-[0_0_15px_#10b981] border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all flex items-center justify-center relative group" title="Yotsuba (Green)">
+      <span class="absolute right-14 bg-black/80 backdrop-blur-md text-white text-xs font-tech px-3 py-1.5 rounded-lg border border-[#10b981]/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_10px_#10b981]">Yotsuba Nakano</span>
+    </button>
+    <button onclick="setTheme('purple')" data-theme="purple" class="theme-btn w-10 h-10 rounded-full bg-[#d946ef] shadow-[0_0_15px_#d946ef] border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all flex items-center justify-center relative group" title="Nino (Purple Pink)">
+      <span class="absolute right-14 bg-black/80 backdrop-blur-md text-white text-xs font-tech px-3 py-1.5 rounded-lg border border-[#d946ef]/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_10px_#d946ef]">Nino Nakano</span>
+    </button>
+    <button onclick="setTheme('yellow')" data-theme="yellow" class="theme-btn w-10 h-10 rounded-full bg-[#eab308] shadow-[0_0_15px_#eab308] border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all flex items-center justify-center relative group" title="Ichika (Yellow)">
+      <span class="absolute right-14 bg-black/80 backdrop-blur-md text-white text-xs font-tech px-3 py-1.5 rounded-lg border border-[#eab308]/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_10px_#eab308]">Ichika Nakano</span>
+    </button>
+    <button onclick="setTheme('blue')" data-theme="blue" class="theme-btn w-10 h-10 rounded-full bg-[#3b82f6] shadow-[0_0_15px_#3b82f6] border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all flex items-center justify-center relative group" title="Miku (Blue)">
+      <span class="absolute right-14 bg-black/80 backdrop-blur-md text-white text-xs font-tech px-3 py-1.5 rounded-lg border border-[#3b82f6]/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_10px_#3b82f6]">Miku Nakano</span>
+    </button>
+  </div>
+
+  <div id="toast-container" class="fixed top-28 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+  <div id="quickview-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-2xl z-[80] flex items-center justify-center p-4 opacity-0 transition-all duration-300 gpu-accel">
+    <div class="tech-card max-w-2xl w-full rounded-[2.5rem] p-8 md:p-10 relative scale-95 transition-all duration-300 border border-primary/30">
+      <button onclick="closeQuickView()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-primary hover:bg-primary/20 transition-all">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <div id="quickview-content"></div>
+    </div>
+  </div>
+
+  <div class="relative z-20">
+    <!-- Header/Nav -->
+    <nav class="fixed top-6 left-0 right-0 z-50 px-4 md:px-0 transition-all duration-300 pointer-events-none gpu-accel">
+      <div class="max-w-6xl mx-auto glass-card rounded-[2rem] px-8 py-3 flex flex-col gap-1.5 shadow-[0_15px_35px_rgba(0,0,0,0.85)] border border-white/10 hover:border-primary/30 transition-all pointer-events-auto relative backdrop-blur-2xl">
+        
+        <div class="flex items-center justify-between text-[8px] font-tech text-zinc-400 uppercase tracking-[0.25em] border-b border-white/5 pb-1">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-primary rounded-full animate-ping"></span>
+            <span>H4xScripts</span>
+          </div>
+          <div>H4xScripts</div>
+          <div class="hidden sm:block">H4xScripts</div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-5">
+            <a href="Login.html" id="auth-btn" class="magnetic-btn px-5 py-2.5 bg-gradient-to-r from-zinc-800 to-black hover:from-primary-dark hover:to-primary text-white font-fantasy font-bold text-[10px] md:text-xs tracking-[0.2em] uppercase rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgb(var(--primary-rgb)/0.6)] transition-all border border-white/20 flex items-center gap-2">
+              <i data-lucide="user" class="w-3.5 h-3.5"></i> <span>Login</span>
+            </a>
+          </div>
+
+<div class="hidden md:flex gap-4 lg:gap-6 text-sm font-bold font-fantasy text-gray-300 uppercase tracking-[0.2em] items-center">
+  <a href="index.html#products" class="hover:text-primary transition-colors relative group py-1"><span>Products</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="Partners.html" class="hover:text-primary transition-colors relative group py-1"><span>Partners</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="Affiliate.html" class="hover:text-primary transition-colors relative group py-1"><span>Affiliate</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="Youtube.html" class="hover:text-primary transition-colors relative group py-1"><span>Videos</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="Credits.html" class="hover:text-primary transition-colors relative group py-1"><span>Credits</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="index.html#reviews" class="hover:text-white transition-colors relative group py-1"><span>Reviews</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-white shadow-[0_0_8px_white] transition-all duration-300 group-hover:w-full"></span></a>
+  <a href="index.html#faq-section" class="hover:text-primary transition-colors relative group py-1"><span>FAQ</span><span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary shadow-[0_0_8px_rgb(var(--primary-rgb))] transition-all duration-300 group-hover:w-full"></span></a>
+</div>
+
+            <div class="flex items-center gap-4">
+              <button id="sound-toggle" onclick="toggleSound()" title="Toggle UI Sound Effects" class="p-3 text-zinc-400 hover:text-white transition-all bg-white/5 rounded-full border border-white/10 hover:border-primary shadow-[0_0_15px_rgba(0,0,0,0.8)] hover:shadow-[0_0_20px_rgb(var(--primary-rgb)/0.5)]">
+                <i data-lucide="volume-2" id="sound-icon" class="w-5 h-5 text-primary drop-shadow-[0_0_5px_rgb(var(--primary-rgb))]"></i>
+              </button>
+              <button id="cart-toggle" class="relative p-3 text-zinc-300 hover:text-white transition-all bg-white/5 rounded-full border border-white/10 hover:border-primary shadow-[0_0_15px_rgba(0,0,0,0.8)] hover:shadow-[0_0_20px_rgb(var(--primary-rgb)/0.5)] hover:scale-105 active:scale-95">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-primary drop-shadow-[0_0_5px_rgb(var(--primary-rgb))]"></i>
+                <span id="cart-badge" class="hidden absolute -top-1.5 -right-1.5 bg-primary text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-[0_0_12px_rgb(var(--primary-rgb))] border border-black animate-pulse">0</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Floating Logo Block -->
+    <div class="fixed top-5 left-4 md:top-7 md:left-8 z-[60] flex items-center gap-2 md:gap-3 cursor-pointer group select-none gpu-accel" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <div class="relative">
+        <div class="absolute inset-0 bg-primary/30 rounded-full blur-md group-hover:scale-125 transition-transform duration-500"></div>
+        <img src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image3.png" alt="Logo" class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain drop-shadow-[0_0_15px_rgb(var(--primary-rgb)/0.8)] group-hover:scale-110 transition-transform duration-500 relative z-10">
+      </div>
+      <span class="hidden sm:block font-black font-fantasy text-white uppercase tracking-wider drop-shadow-[0_0_10px_rgb(var(--primary-rgb)/0.5)]" style="font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1;">
+        H4x<span class="text-gradient-magic">Store</span>
+      </span>
+    </div>
+
+    <!-- Cart Overlay & Sidebar -->
+    <div id="cart-overlay" class="hidden fixed inset-0 bg-black/90 backdrop-blur-xl z-[60] transition-opacity duration-300"></div>
+    <div id="cart-sidebar" class="translate-x-full transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) fixed top-0 right-0 h-full w-full max-w-md bg-[#050505]/95 backdrop-blur-3xl border-l border-primary/30 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] z-[70] flex flex-col gpu-accel">
+      <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-black via-primary-dark/30 to-black">
+        <h2 class="text-2xl font-bold font-fantasy text-white uppercase tracking-wider flex items-center gap-3">
+          <i data-lucide="shopping-cart" class="text-primary w-6 h-6 drop-shadow-[0_0_8px_rgb(var(--primary-rgb)/0.8)]"></i> Cart
+        </h2>
+        <button id="cart-close" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-primary hover:bg-primary/20 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4 font-sans">
+        <p class="text-center text-zinc-500 mt-10 text-lg font-serif italic">Your cart is empty.</p>
+      </div>
+
+      <div class="p-6 border-t border-white/10 bg-black/80">
+        <div class="flex gap-2 mb-6">
+          <input type="text" id="promo-input" placeholder="Promo Code (Try H4xStore!)" class="flex-1 bg-zinc-900/80 border border-white/10 rounded-xl px-4 py-3 text-white text-md font-tech focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all shadow-inner">
+          <button id="apply-promo" class="px-6 py-3 bg-white/10 hover:bg-primary text-white rounded-xl text-xs font-bold font-fantasy uppercase tracking-widest transition-all border border-white/10 hover:border-primary hover:shadow-[0_0_20px_rgb(var(--primary-rgb)/0.6)]">Apply</button>
+        </div>
+        
+        <div class="space-y-3 mb-6 text-lg font-sans">
+          <div class="flex justify-between text-zinc-400 font-semibold"><span>Subtotal</span><span id="cart-subtotal" class="font-bold text-white">$0.00</span></div>
+          <div id="discount-row" class="hidden flex justify-between"></div>
+          <div class="flex justify-between text-2xl font-bold text-white pt-4 border-t border-white/10">
+            <span class="font-fantasy">Total</span><span id="cart-total" class="text-primary font-tech font-bold drop-shadow-[0_0_12px_rgb(var(--primary-rgb)/0.6)]">$0.00</span>
+          </div>
+        </div>
+
+        <button id="checkout-btn" disabled class="glow-btn magnetic-btn w-full py-4 bg-gradient-to-r from-primary-dark via-primary to-primary hover:from-primary hover:to-primary-dark disabled:from-zinc-900 disabled:to-zinc-900 disabled:border-zinc-800 disabled:text-zinc-600 text-white rounded-xl font-bold font-fantasy text-lg uppercase tracking-[0.2em] shadow-[0_0_25px_rgb(var(--primary-rgb)/0.5)] hover:shadow-[0_0_40px_rgb(var(--primary-rgb)/0.8)] transition-all border border-white/20">
+          Pay Now
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN BODY -->
+    <main class="max-w-7xl mx-auto pt-44 px-4 relative">
+      <div id="broadcast-container" class="mb-10 w-full relative z-20 flex flex-col gap-3 empty:hidden"></div>
+      <div class="relative pb-20 flex flex-col items-center justify-center text-center min-h-[75vh] reveal">
+        
+        <div class="shimmer-badge inline-flex items-center gap-3 px-6 py-2.5 rounded-full glass-card border border-primary/40 text-primary font-sans text-xs font-black tracking-[0.25em] uppercase mb-10 shadow-[0_0_25px_rgb(var(--primary-rgb)/0.3)] hover:scale-105 transition-all cursor-default relative z-10 backdrop-blur-md">
+          <i data-lucide="activity" class="w-4 h-4 animate-pulse text-white drop-shadow-[0_0_8px_white]"></i> 
+        </div>
+        
+        <h1 class="font-fantasy font-black text-5xl md:text-8xl lg:text-9xl uppercase tracking-tight mb-8 text-white drop-shadow-2xl leading-[0.95] relative z-10">
+          H4xScripts <br/>
+          <span class="text-gradient-magic relative inline-block pb-2 mt-2 drop-shadow-[0_0_12px_rgb(var(--primary-rgb)/0.5)]">
+            Premium
+            <i class="fa-solid fa-star text-2xl text-white absolute -top-3 -right-8 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"></i>
+            <i class="fa-solid fa-star text-xl text-primary absolute bottom-2 -left-8 animate-pulse delay-500 drop-shadow-[0_0_15px_rgb(var(--primary-rgb)/0.8)]"></i>
+          </span>
+        </h1>
+        
+        <p class="font-serif italic text-gray-400 max-w-3xl text-xl md:text-2xl leading-relaxed mb-14 relative z-10 drop-shadow-lg">
+          "Exclusive perks awaits. <span class="text-primary font-semibold border-b border-primary/50 drop-shadow-[0_0_8px_rgb(var(--primary-rgb)/0.5)]">Instant delivery</span>, undetected scripts, weekly updates, Premium benefits"
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-6 w-full sm:w-auto justify-center mb-20 relative z-10">
+          <a href="#products" class="glow-btn magnetic-btn px-10 py-5 bg-gradient-to-r from-primary-dark via-primary to-primary hover:from-primary hover:to-primary-dark text-white font-fantasy font-bold text-sm tracking-[0.2em] uppercase rounded-full shadow-[0_0_35px_rgb(var(--primary-rgb)/0.6)] hover:shadow-[0_0_50px_rgb(var(--primary-rgb)/0.9)] transition-all flex items-center justify-center gap-3 border border-white/20">
+            <i data-lucide="shopping-cart" class="w-5 h-5 drop-shadow-[0_0_5px_white]"></i> View Store
+          </a>
+          <a href="#reviews" class="magnetic-btn px-10 py-5 glass-card text-gray-200 hover:text-white font-fantasy font-bold text-sm tracking-[0.2em] uppercase rounded-full transition-all flex items-center justify-center gap-3 border border-white/10 hover:border-primary/60 hover:shadow-[0_0_30px_rgb(var(--primary-rgb)/0.4)] backdrop-blur-xl">
+            <i data-lucide="star" class="w-5 h-5 text-primary drop-shadow-[0_0_5px_rgb(var(--primary-rgb))]"></i> Read Reviews
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl w-full mx-auto pt-10 border-t border-white/10 relative z-10">
+          <div class="glass-card p-6 rounded-3xl text-center border-white/5 hover:border-primary/40 transition-all backdrop-blur-xl group">
+            <div class="text-3xl md:text-5xl font-black font-tech text-gradient-magic mb-1 group-hover:scale-110 transition-transform"><span class="counter" data-target="99.9">0</span>%</div>
+            <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Server Uptime</div>
+          </div>
+          <div class="glass-card p-6 rounded-3xl text-center border-white/5 hover:border-primary/40 transition-all backdrop-blur-xl group">
+            <div class="text-3xl md:text-5xl font-black font-tech text-white mb-1 group-hover:scale-110 transition-transform group-hover:text-primary group-hover:drop-shadow-[0_0_10px_rgb(var(--primary-rgb))]"><span class="counter" data-target="15">0</span>k+</div>
+            <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Keys Delivered</div>
+          </div>
+          <div class="glass-card p-6 rounded-3xl text-center border-white/5 hover:border-primary/40 transition-all backdrop-blur-xl group">
+            <div class="text-3xl md:text-5xl font-black font-tech text-gradient-magic mb-1 group-hover:scale-110 transition-transform"><span class="counter" data-target="0">0</span>%</div>
+            <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Detection Rate</div>
+          </div>
+          <div class="glass-card p-6 rounded-3xl text-center border-white/5 hover:border-primary/40 transition-all backdrop-blur-xl group">
+            <div class="text-3xl md:text-5xl font-black font-tech text-white mb-1 group-hover:scale-110 transition-transform group-hover:text-primary group-hover:drop-shadow-[0_0_10px_rgb(var(--primary-rgb))]"><span class="counter" data-target="1204">0</span>+</div>
+            <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Verified Reviews</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS SECTION -->
+      <section id="products" class="py-32 relative reveal">
+        <div class="text-center mb-16 relative z-10">
+          <span class="inline-block px-4 py-1 rounded-full bg-primary-dark/40 text-primary font-sans font-bold tracking-[0.3em] text-xs uppercase mb-4 border border-primary/30 shadow-[0_0_15px_rgb(var(--primary-rgb)/0.2)]">Instant Shipment!</span>
+          <h2 class="font-fantasy text-5xl md:text-7xl font-bold text-white uppercase tracking-wider mb-4 drop-shadow-lg">
+            Select <span class="text-gradient-magic italic">Plan  </span>
+          </h2>
+          <div class="w-32 h-1.5 bg-gradient-to-r from-primary via-white to-primary-dark mx-auto rounded-full opacity-75 animate-pulse shadow-[0_0_20px_rgb(var(--primary-rgb)/0.8)]"></div>
+          
+          <div class="flex justify-center gap-3 mt-10 flex-wrap font-fantasy text-xs tracking-widest uppercase">
+            <button onclick="filterProducts('all')" class="tab-btn active px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:border-primary transition-all text-gray-300">All Licenses</button>
+            <button onclick="filterProducts('popular')" class="tab-btn px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:border-primary transition-all text-gray-300">Best Sellers</button>
+            <button onclick="filterProducts('lifetime')" class="tab-btn px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:border-primary transition-all text-gray-300">VIP / Lifetime</button>
+          </div>
+        </div>
+        
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10 perspective-[2000px] transition-all duration-500">
+        </div>
+      </section>
+
+      <!-- REVIEWS SECTION -->
+      <section id="reviews" class="py-32 relative reveal">
+        <div class="text-center mb-20 relative z-10">
+          <h2 class="font-fantasy text-5xl md:text-7xl font-bold text-white uppercase tracking-wider mb-6 drop-shadow-lg">
+            <span class="text-gradient-magic italic drop-shadow-[0_0_12px_rgb(var(--primary-rgb)/0.5)]">Ratings</span>
+          </h2>
+          <div id="stars-container" class="flex items-center justify-center gap-2 text-primary mb-4 drop-shadow-[0_0_15px_rgb(var(--primary-rgb)/0.8)]">
+             <!-- Dynamically Generated Stars -->
+          </div>
+          <p class="text-zinc-400 font-serif italic text-xl" id="review-average-text">Loading verified reviews...</p>
+        </div>
+        
+        <div id="review-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+            <!-- Dynamically Generated Reviews -->
+        </div>
+      </section>
+
+      <!-- FAQ SECTION -->
+      <section id="faq-section" class="py-32 relative reveal">
+        <div class="text-center mb-20 relative z-10">
+          <h2 class="font-fantasy text-5xl md:text-7xl font-bold text-white uppercase tracking-wider mb-4 drop-shadow-lg">
+            Frequently <span class="text-gradient-magic italic">Asked</span>
+          </h2>
+          <div class="w-32 h-1.5 bg-gradient-to-r from-primary via-white to-primary-dark mx-auto rounded-full opacity-75 shadow-[0_0_20px_rgb(var(--primary-rgb)/0.8)]"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto space-y-5 relative z-10">
+          <div class="faq-item tech-card rounded-3xl p-6 md:p-8 cursor-pointer transition-all border border-white/10 hover:border-primary/50 backdrop-blur-xl relative" onclick="toggleFaq(this)">
+            <div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div><div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>
+            <div class="flex justify-between items-center font-fantasy font-bold text-lg md:text-xl text-white uppercase tracking-wider">
+              <span>How long does instant delivery take?</span>
+              <i data-lucide="chevron-down" class="faq-icon w-6 h-6 text-zinc-400 transition-transform duration-300"></i>
+            </div>
+            <div class="faq-answer mt-4 text-zinc-300 font-serif italic text-base md:text-lg leading-relaxed border-t border-white/10 pt-4">
+              "Delivery is 100% automated. Immediately after your Robux or crypto transaction is confirmed, your unique license key and private loader download link are generated and displayed instantly on your screen and dispatched to your email."
+            </div>
+          </div>
+          <div class="faq-item tech-card rounded-3xl p-6 md:p-8 cursor-pointer transition-all border border-white/10 hover:border-primary/50 backdrop-blur-xl relative" onclick="toggleFaq(this)">
+            <div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div><div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>
+            <div class="flex justify-between items-center font-fantasy font-bold text-lg md:text-xl text-white uppercase tracking-wider">
+              <span>Where can i contact you?</span>
+              <i data-lucide="chevron-down" class="faq-icon w-6 h-6 text-zinc-400 transition-transform duration-300"></i>
+            </div>
+            <div class="faq-answer mt-4 text-zinc-300 font-serif italic text-base md:text-lg leading-relaxed border-t border-white/10 pt-4">
+              "You can contact us at gg.h4xscripts our official community discord server."
+            </div>
+          </div>
+          <div class="faq-item tech-card rounded-3xl p-6 md:p-8 cursor-pointer transition-all border border-white/10 hover:border-primary/50 backdrop-blur-xl relative" onclick="toggleFaq(this)">
+            <div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div><div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>
+            <div class="flex justify-between items-center font-fantasy font-bold text-lg md:text-xl text-white uppercase tracking-wider">
+              <span>What happens if I need technical support?</span>
+              <i data-lucide="chevron-down" class="faq-icon w-6 h-6 text-zinc-400 transition-transform duration-300"></i>
+            </div>
+            <div class="faq-answer mt-4 text-zinc-300 font-serif italic text-base md:text-lg leading-relaxed border-t border-white/10 pt-4">
+              "We provide 24/7 priority ticketing through our Discord community. 1-Month and Lifetime key holders receive direct remote desktop assistance if they encounter any setup issues."
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="faq" class="bg-gradient-to-b from-black/0 via-zinc-950/80 to-black pt-36 pb-16 px-6 relative mt-20 border-t border-white/10 z-20">
+      <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-dark via-primary to-primary-dark shadow-[0_0_25px_rgb(var(--primary-rgb))]"></div>
+
+      <div class="max-w-5xl mx-auto text-center relative z-10 reveal">
+        <h2 class="font-fantasy font-black text-4xl md:text-7xl mb-8 leading-tight text-white uppercase tracking-wider drop-shadow-lg">
+          Best <span class="text-gradient-magic inline-block">Script</span>
+        </h2>
+        <p class="font-serif italic text-gray-400 text-xl md:text-2xl mb-12 max-w-2xl mx-auto drop-shadow-md">
+          "Contact us on gg.h4xscripts for more info!."
+        </p>
+
+        <div class="flex justify-center items-center gap-4 mb-12">
+          <img src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image3.png" alt="Logo" loading="lazy" class="w-14 h-14 object-contain drop-shadow-[0_0_20px_rgb(var(--primary-rgb)/0.8)] hover:scale-110 transition-transform duration-500">
+        </div>
+
+        <div class="border-t border-white/10 pt-10 flex flex-col md:flex-row justify-between items-center font-sans text-xs font-bold text-gray-500 tracking-[0.2em] uppercase">
+          <p>© 2026 H4xStore. All rights reserved.</p>
+          <div class="flex gap-8 mt-6 md:mt-0">
+            <span class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><i data-lucide="shield-check" class="w-4 h-4 text-primary"></i> 100% Undetected</span>
+            <span class="flex items-center gap-2 hover:text-white transition-colors cursor-pointer"><i data-lucide="zap" class="w-4 h-4 text-primary"></i> Instant Delivery</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="back-to-top" class="hidden fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full glass-card border border-primary/60 text-white flex items-center justify-center shadow-[0_0_25px_rgb(var(--primary-rgb)/0.6)] hover:scale-110 hover:bg-primary transition-all gpu-accel">
+      <i data-lucide="arrow-up" class="w-6 h-6 text-primary hover:text-white transition-colors drop-shadow-[0_0_5px_currentColor]"></i>
+    </button>
+  </div>
+
+  <script>
+    // Theme Definitions Restored to prevent crash!
+    const THEMES = {
+      red: { name: 'Itsuki Nakano', img: 'https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image2.png' },
+      green: { name: 'Yotsuba Nakano', img: 'https://github.com/m4shallmall0w-star/ImagesFOrh4xweb/blob/main/Yotsuba%20h4x-jukebox-bg-removed.png?raw=true' },
+      purple: { name: 'Nino Nakano', img: 'https://github.com/m4shallmall0w-star/ImagesFOrh4xweb/blob/main/no%20background%20nino%20h4x.png?raw=true' },
+      yellow: { name: 'Ichika Nakano', img: 'https://github.com/m4shallmall0w-star/ImagesFOrh4xweb/blob/main/Itchika%20nakano-jukebox-bg-removed.png?raw=true' },
+      blue: { name: 'Miku Nakano', img: 'https://github.com/m4shallmall0w-star/ImagesFOrh4xweb/blob/main/ChatGPT%20Image%20Jul%2014,%202026,%2009_32_54%20AM-jukebox-bg-removed.png?raw=true' }
+    };
+
+    const FLOWER_PATHS = [
+      "M12 11.5C12 11.5 10.5 8.5 10.5 6C10.5 3.5 12 3 12 3C12 3 13.5 3.5 13.5 6C13.5 8.5 12 11.5 12 11.5ZM12.5 12C12.5 12 15.5 10.5 18 10.5C20.5 10.5 21 12 21 12C21 12 20.5 13.5 18 13.5C15.5 13.5 12.5 12 12.5 12ZM12 12.5C12 12.5 13.5 15.5 13.5 18C13.5 20.5 12 21 12 21C12 21 10.5 20.5 10.5 18C10.5 15.5 12 12.5 12 12.5ZM11.5 12C11.5 12 8.5 13.5 6 13.5C3.5 13.5 3 12 3 12C3 12 3.5 10.5 6 10.5C8.5 10.5 11.5 12 11.5 12ZM12 12C12 12 14.5 14.5 16.5 16.5C18.5 18.5 17.5 19.5 17.5 19.5C17.5 19.5 16.5 20.5 14.5 18.5C12.5 16.5 12 12 12 12Z",
+      "M12.1 2.3c-.6-.7-1.8-.7-2.4 0l-7.4 8.7c-.8 1-.6 2.5.5 3.2 2.1 1.4 4.8 2.1 7.2.9 2.5-1.2 3.8-3.9 3.2-6.6L12.1 2.3z"
+    ];
+
+    window.setTheme = (color) => {
+      localStorage.setItem('h4x_theme', color);
+      window.location.reload(); 
+    };
+
+    function spawnFlowers() {
+      const container = document.getElementById('flower-container');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const maxFlowers = 12; 
+      for (let i = 0; i < maxFlowers; i++) {
+        const size = Math.random() * 24 + 12;
+        const left = Math.random() * 100;
+        const delay = Math.random() * -15;
+        const duration = Math.random() * 12 + 10;
+        const sway = Math.random() * 120 - 60;
+        const rotation = Math.random() * 720 - 360;
+        const opacity = Math.random() * 0.3 + 0.2;
+        const path = FLOWER_PATHS[Math.floor(Math.random() * FLOWER_PATHS.length)];
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "currentColor");
+        svg.classList.add("floating-flower");
+        
+        svg.style.width = `${size}px`;
+        svg.style.height = `${size}px`;
+        svg.style.left = `${left}%`;
+        svg.style.setProperty('--drift-duration', `${duration}s`);
+        svg.style.setProperty('--sway-x', `${sway}px`);
+        svg.style.setProperty('--rotations', `${rotation}deg`);
+        svg.style.setProperty('--max-opacity', `${opacity}`);
+        svg.style.animationDelay = `${delay}s`;
+
+        svg.innerHTML = `<path d="${path}"/>`;
+        container.appendChild(svg);
+      }
+    }
+
+    let products = []; 
+    let cart = [];
+    let currentFilter = 'all';
+    let soundEnabled = false;
+
+    async function fetchReviews() {
+        const localReviews = window.globalState && window.globalState.reviews ? window.globalState.reviews : [];
+        let komerzaReviews = [];
+        
+        try {
+           const STORE_ID = await window.getKomerzaStoreId();
+           const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/reviews?PageSize=100`, { 
+               headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' } 
+           });
+           if(res.ok) {
+               const data = await res.json();
+               komerzaReviews = data.data || [];
+           }
+        } catch(e) { console.warn("Komerza Reviews Offline", e); }
+
+        // Sanitize & Merge APIs
+        const formattedKomerza = komerzaReviews.map(r => ({
+            id: r.id, 
+            username: r.customerEmail ? r.customerEmail.split('@')[0] : 'Verified Buyer', 
+            rating: r.rating, 
+            title: r.productName || 'Purchase Review',
+            comment: r.reason,
+            verified: true, 
+            dateSubmitted: r.dateCreated,
+            adminReply: r.reply ? { name: 'Admin', reply: r.reply, date: r.repliedAt } : null
+        }));
+
+        const allReviews = [...localReviews, ...formattedKomerza];
+        
+        // Sort Newest First
+        allReviews.sort((a,b) => new Date(b.dateSubmitted || 0) - new Date(a.dateSubmitted || 0));
+
+        // Math: Calculate True Average Rating
+        let totalScore = 0;
+        allReviews.forEach(r => totalScore += parseInt(r.rating));
+        const avg = allReviews.length > 0 ? (totalScore / allReviews.length).toFixed(1) : "5.0";
+        const count = allReviews.length > 0 ? allReviews.length : "1,204"; // Fallback to 1204 if strictly 0 reviews for aesthetic
+
+        document.getElementById('stars-container').innerHTML = Array(Math.round(avg)).fill('<i data-lucide="star" class="w-8 h-8 fill-current text-primary drop-shadow-[0_0_8px_currentColor]"></i>').join('');
+        document.getElementById('review-average-text').innerHTML = `<span class="text-white font-bold">${avg}/5</span> Average rating based on <span class="text-white font-bold">${count}</span> verified reviews`;
+
+        // Display up to 9 recent reviews
+        const displayReviews = allReviews.length > 0 ? allReviews.slice(0, 9) : [
+          { username: 'Ghost_Sniper', rating: 5, comment: 'Best keys on the market. Instant delivery and zero downtime.', verified: true, title: 'Lifetime Key' },
+          { username: 'ShadowHunter', rating: 5, comment: 'Support team is amazing. Lifetime key is 100% worth it.', verified: true, title: 'Lifetime Key' },
+          { username: 'BlazeX', rating: 4, comment: 'Great product, works flawlessly. Only issue was a slight delay in crypto confirmation.', verified: true, title: '1 Month Access' }
+        ];
+
+        document.getElementById('review-grid').innerHTML = displayReviews.map(r => `
+          <div class="tech-card p-10 rounded-[2.5rem] relative group transition-all duration-500 hover:-translate-y-3 flex flex-col justify-between backdrop-blur-2xl" onmouseenter="playUiSound()">
+            <div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div><div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>
+            <i class="fa-solid fa-quote-right absolute top-8 right-8 text-6xl text-primary/10 -z-10 group-hover:text-primary/20 transition-colors duration-500"></i>
+            
+            <div>
+              <div class="flex items-center gap-4 mb-6 relative z-10">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-dark via-primary to-black flex items-center justify-center font-fantasy font-bold text-2xl text-white shadow-[0_0_15px_rgb(var(--primary-rgb)/0.5)] border border-white/20 group-hover:scale-110 transition-transform">
+                  ${r.username.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div class="font-bold font-fantasy text-white text-lg flex items-center gap-2 uppercase tracking-wide group-hover:text-primary transition-colors drop-shadow-sm">
+                    ${r.username} ${r.verified ? '<i data-lucide="check-circle" class="text-[#00ff88] w-4 h-4 drop-shadow-[0_0_8px_#00ff88]" title="Verified Purchase"></i>' : ''}
+                  </div>
+                  <span class="text-[10px] font-sans font-bold uppercase tracking-widest text-zinc-500">${r.title || 'Verified Buyer'}</span>
+                </div>
+              </div>
+              <p class="text-gray-300 font-serif text-lg leading-relaxed italic mb-6 relative z-10">"${r.comment}"</p>
+              
+              ${r.adminReply ? `
+                <div class="mt-4 p-4 bg-primary/5 border-l-2 border-primary rounded-r-xl relative z-10">
+                  <span class="text-[10px] font-black font-fantasy uppercase tracking-widest text-primary block mb-1">Developer Response:</span>
+                  <p class="text-zinc-400 text-sm font-sans">"${r.adminReply.reply}"</p>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="flex text-primary pt-6 mt-4 border-t border-white/10 drop-shadow-[0_0_10px_rgb(var(--primary-rgb)/0.8)] relative z-10 justify-between items-center">
+              <div class="flex">${Array(r.rating).fill('<i data-lucide="star" class="w-4 h-4 fill-current"></i>').join('')}</div>
+              ${r.dateSubmitted ? `<span class="text-[9px] text-zinc-600 font-tech uppercase tracking-widest">${new Date(r.dateSubmitted).toLocaleDateString()}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+        lucide.createIcons();
+        attachTiltEffects();
+    }
+
+    // Fetch Live Products from Komerza API using the Store ID dynamically
+    async function fetchLiveProducts() {
+        try {
+            const STORE_ID = await window.getKomerzaStoreId();
+            if (!STORE_ID) throw new Error("Could not fetch Store ID");
+
+            // Correct endpoint as per the OpenAPI docs
+            const response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products/all`, {
+                headers: {
+                    'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
+                    'User-Agent': 'H4xStore/1.0'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch from Komerza');
+            
+            const data = await response.json();
+            
+            const existingState = typeof loadStoreState === 'function' ? loadStoreState() : { products: [] };
+            const localProducts = existingState.products || [];
+
+            products = data.data.map(kProd => {
+                const variant = kProd.variants && kProd.variants.length > 0 ? kProd.variants[0] : {};
+                
+                let parsedFeatures = [];
+                const productName = kProd.name.toLowerCase();
+
+                if (productName.includes("lifetime")) {
+                    parsedFeatures = [
+                        "Lifetime Access", "Unlimited Updates", "Works on All Supported Scripts",
+                        "Premium Discord Role", "One-Time Purchase", "Priority Support",
+                        "Exclusive Content", "Early Access to New Features", "Access to Beta Testing",
+                        "Special Recognition in Community"
+                    ];
+                } else if (productName.includes("2 week") || productName.includes("2-week") || productName.includes("14 day") || productName.includes("14-day")) {
+                    parsedFeatures = ["14 Days Access", "Unlimited Updates", "Works on All Supported Scripts", "Buyer Discord Role", "Renew Anytime"];
+                } else if (productName.includes("month") || productName.includes("30 day") || productName.includes("30-day")) {
+                    parsedFeatures = ["30 Days Access", "Unlimited Updates", "Works on All Supported Scripts", "Buyer Discord Role", "Renew Anytime"];
+                } else if (kProd.description && kProd.description.includes("|")) {
+                    parsedFeatures = kProd.description.split("|").map(f => f.trim()).filter(Boolean);
+                } else {
+                    parsedFeatures = ["Instant Delivery", "Premium Discord Role", "Priority Support"];
+                }
+
+                let cat = 'all';
+                if (kProd.name.toLowerCase().includes('lifetime') || kProd.name.toLowerCase().includes('vip')) cat = 'lifetime';
+                if (kProd.name.toLowerCase().includes('month')) cat = 'popular';
+
+                const currentStock = variant.stock !== undefined && variant.stock !== null ? variant.stock : 0;
+
+                let meta = {};
+                try { meta = JSON.parse(variant.metadata || '{}'); } catch(e) {}
+                
+                const localProd = localProducts.find(p => p.komerzaProductId === kProd.id);
+                
+                const isHot = meta.hot !== undefined ? meta.hot : (localProd ? localProd.bestSeller : false);
+                const isSale = meta.sale !== undefined ? meta.sale : (localProd ? localProd.sale : false);
+                const isHidden = meta.hidden !== undefined ? meta.hidden : (localProd ? localProd.hidden : false);
+
+                return {
+                    id: kProd.id, 
+                    name: kProd.name,
+                    price: variant.cost || 0,
+                    komerzaProductId: kProd.id,
+                    komerzaVariantId: variant.id || "",
+                    category: cat,
+                    bestSeller: isHot,
+                    hidden: isHidden,
+                    sale: isSale,
+                    stock: currentStock,
+                    maxStock: variant.maximumQuantity > 0 ? variant.maximumQuantity : Math.max(currentStock, 1000),
+                    features: parsedFeatures,
+                    
+                    variants: [{
+                        id: variant.id || "",
+                        price: variant.cost || 0,
+                        isHot: isHot,
+                        isSale: isSale,
+                        isHidden: isHidden
+                    }]
+                };
+            });
+
+            const state = typeof loadStoreState === 'function' ? loadStoreState() : { products: [] };
+            state.products = products;
+            if(typeof saveStoreState === 'function') saveStoreState(state);
+
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+              preloader.style.opacity = '0';
+              setTimeout(() => preloader.style.visibility = 'hidden', 800);
+            }
+
+            renderProducts();
+
+        } catch (error) {
+            console.error("API Sync Failed, falling back to local state but preventing oversell by defaulting to 0 stock.", error);
+            
+            const cachedProducts = window.globalState ? window.globalState.products || [] : [];
+            products = cachedProducts.map(p => ({ ...p, stock: 0 }));
+            
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+              preloader.style.opacity = '0';
+              setTimeout(() => preloader.style.visibility = 'hidden', 800);
+            }
+            renderProducts();
+        }
+        
+        fetchReviews(); // Trigger Reviews Fetch
+    }
+
+    const MOCK_NAMES = ['Shadow', 'Blaze', 'Ghost', 'Viper', 'Nova', 'Reaper', 'Titan', 'Kraken'];
+    const MOCK_ITEMS = ['Lifetime Key', '1 Month Key', '2 Week Key'];
+
+    const productGrid = document.getElementById('product-grid');
+    const reviewGrid = document.getElementById('review-grid');
+    const cartBadge = document.getElementById('cart-badge');
+    const cartItems = document.getElementById('cart-items');
+    const cartSubtotal = document.getElementById('cart-subtotal');
+    const discountRow = document.getElementById('discount-row');
+    const cartTotal = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const toastContainer = document.getElementById('toast-container');
+    const leftAnime = document.getElementById('left-anime');
+
+    const UI_CLICK_STREAM = "Chill Piano Electronic Music (For Videos) - Home by Neutrin05.mp3"; 
+    const EASTER_EGG_STREAM = "Nakano Itsuki Voice Simple [五等分の花嫁] - GTNH.mp3"; 
+
+    const uiAudioNode = new Audio(UI_CLICK_STREAM);
+    const easterEggAudioNode = new Audio(EASTER_EGG_STREAM);
+
+    function playUiSound() {
+      if (!soundEnabled) return;
+      try {
+        if (uiAudioNode.paused) {
+          uiAudioNode.currentTime = 0; 
+          uiAudioNode.volume = 0.35;   
+          uiAudioNode.play().catch(e => console.warn("Audio playback blocked:", e));
+        }
+      } catch(e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      
+      if (soundEnabled) {
+        icon.setAttribute('data-lucide', 'volume-2');
+        addToast('UI Sound Effects Enabled');
+        uiAudioNode.load();
+        easterEggAudioNode.load();
+        setTimeout(() => playUiSound(), 50);
+      } else {
+        icon.setAttribute('data-lucide', 'volume-x');
+        addToast('UI Sound Effects Muted');
+        uiAudioNode.pause();
+        easterEggAudioNode.pause();
+      }
+      lucide.createIcons();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const activeTheme = localStorage.getItem('h4x_theme') || 'red';
+      const animeImg = document.getElementById('anime-character');
+      const animeName = document.getElementById('anime-name');
+      
+      if (animeImg && animeName) {
+        animeImg.src = THEMES[activeTheme].img;
+        animeName.textContent = THEMES[activeTheme].name;
+      }
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('border-white/80', 'scale-110', 'shadow-[0_0_20px_rgba(255,255,255,0.5)]');
+        btn.classList.add('border-transparent');
+        if (btn.dataset.theme === activeTheme) {
+          btn.classList.remove('border-transparent');
+          btn.classList.add('border-white/80', 'scale-110', 'shadow-[0_0_20px_rgba(255,255,255,0.5)]');
+        }
+      });
+
+      spawnFlowers();
+
+      const authBtn = document.getElementById('auth-btn');
+      const isLoggedIn = Auth.isLoggedIn();
+
+      if (isLoggedIn) {
+        authBtn.innerHTML = '<i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Dashboard</span>';
+        authBtn.href = "#"; 
+        
+        authBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.href = 'Dashboard.html'; // Removed lockout logic
+        });
+      }
+
+      const characterElement = document.getElementById("anime-character");
+      if (characterElement) {
+        characterElement.addEventListener("click", (event) => {
+          event.stopPropagation(); 
+          if (!soundEnabled) {
+            addToast("Muted... Enable UI Sounds to hear them");
+            return;
+          }
+          addToast("Easter egg!");
+          try {
+            easterEggAudioNode.currentTime = 0;
+            easterEggAudioNode.volume = 0.70; 
+            easterEggAudioNode.play().catch(e => console.warn("Easter egg playback blocked:", e));
+          } catch(err) {}
+        });
+      }
+    });
+
+    window.addEventListener('load', () => {
+        // Trigger the Komerza API Fetch when the page loads
+        fetchLiveProducts();
+
+        leftAnime.classList.remove('-translate-x-full', 'opacity-0');
+        leftAnime.classList.add('translate-x-0', 'opacity-100');
+        document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+        initCounters();
+    });
+
+    window.filterProducts = (category) => {
+      currentFilter = category;
+      playUiSound();
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(category === 'all' ? 'all' : (category === 'popular' ? 'best' : 'vip'))) {
+          btn.classList.add('active');
+        }
+      });
+      productGrid.style.opacity = '0';
+      productGrid.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        renderProducts();
+        productGrid.style.opacity = '1';
+        productGrid.style.transform = 'scale(1)';
+      }, 250);
+    };
+
+    window.openQuickView = (id) => {
+      playUiSound();
+      const p = products.find(prod => String(prod.id) === String(id));
+      if(!p) return;
+      const modal = document.getElementById('quickview-modal');
+      const content = document.getElementById('quickview-content');
+      
+      const isOutOfStock = p.stock <= 0;
+      
+      content.innerHTML = `
+        <div class="flex flex-col md:flex-row gap-8 items-center">
+          <div class="w-full md:w-1/2 flex flex-col justify-center items-center bg-black/60 p-6 rounded-3xl border border-white/10 relative overflow-hidden backdrop-blur-xl">
+            <div class="aurora-blob blob-primary w-32 h-32 animate-blob"></div>
+            <i data-lucide="shield-alert" class="w-24 h-24 text-primary drop-shadow-[0_0_25px_rgb(var(--primary-rgb))] mb-4 transition-transform hover:scale-110 duration-500"></i>
+            <span class="text-xs font-fantasy tracking-[0.2em] uppercase text-zinc-400">Undetected</span>
+          </div>
+          <div class="w-full md:w-1/2 font-sans">
+            <h3 class="text-3xl font-bold font-fantasy text-white uppercase tracking-wider mb-2 drop-shadow-md">${p.name}</h3>
+            <div class="text-3xl font-extrabold font-tech text-primary drop-shadow-[0_0_15px_rgb(var(--primary-rgb)/0.6)] mb-4">$${p.price.toFixed(2)}</div>
+            <p class="text-zinc-300 font-serif italic text-base mb-6 leading-relaxed">"Instant secure delivery of undetected premium scripts."</p>
+            <div class="space-y-2 mb-8">
+              ${p.features.map(f => `<div class="flex items-center gap-2 text-sm text-zinc-400"><i data-lucide="check" class="text-[#00ff88] w-4 h-4 drop-shadow-[0_0_5px_#00ff88]"></i> <span>${f}</span></div>`).join('')}
+            </div>
+            <button onclick="addToCart('${p.id}'); closeQuickView();" ${isOutOfStock ? 'disabled' : ''} class="glow-btn w-full py-4 rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] transition-all border ${isOutOfStock ? 'bg-zinc-900/60 border-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-gradient-to-r from-primary-dark via-primary to-primary hover:from-primary hover:to-primary-dark text-white border-white/20 shadow-[0_0_25px_rgb(var(--primary-rgb)/0.5)] hover:shadow-[0_0_35px_rgb(var(--primary-rgb)/0.8)]'}">
+              ${isOutOfStock ? 'Out of Stock' : 'Add To Cart Now'}
+            </button>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        modal.style.opacity = '1';
+        modal.firstElementChild.classList.remove('scale-95');
+        modal.firstElementChild.classList.add('scale-100');
+      });
+    };
+
+    window.closeQuickView = () => {
+      const modal = document.getElementById('quickview-modal');
+      modal.style.opacity = '0';
+      modal.firstElementChild.classList.remove('scale-100');
+      modal.firstElementChild.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+
+    function renderBroadcasts() {
+      const container = document.getElementById('broadcast-container');
+      if (!container) return;
+      
+      const announcements = window.globalState && window.globalState.site ? window.globalState.site.announcements : [];
+      
+      if (announcements.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = announcements.map(ann => `
+        <div class="glass-card border border-primary/50 bg-primary/10 rounded-2xl p-4 flex items-center gap-5 shadow-[0_0_25px_rgb(var(--primary-rgb)/0.2)] animate-pop-in backdrop-blur-xl group">
+          <div class="w-12 h-12 rounded-full bg-primary/20 border border-primary flex items-center justify-center shrink-0 shadow-[0_0_15px_rgb(var(--primary-rgb)/0.4)] relative">
+            <div class="absolute inset-0 rounded-full border border-primary animate-ping opacity-20"></div>
+            <i data-lucide="radio" class="w-5 h-5 text-white drop-shadow-[0_0_8px_currentColor] animate-pulse"></i>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-white font-fantasy font-black uppercase tracking-[0.2em] text-sm group-hover:text-primary transition-colors drop-shadow-md">
+              [ <span class="text-primary">${ann.label}</span> ]
+            </h4>
+            <p class="text-zinc-300 font-tech tracking-wider text-sm mt-1">"${ann.text}"</p>
+          </div>
+        </div>
+      `).join('');
+      
+      lucide.createIcons();
+    }
+
+    function renderProducts() {
+      if(!products || products.length === 0) return;
+      
+      const visibleProducts = products.filter(p => p.hidden !== true);
+      const filtered = currentFilter === 'all' ? visibleProducts : visibleProducts.filter(p => p.category === currentFilter || (currentFilter === 'popular' && p.bestSeller));
+      
+      productGrid.innerHTML = filtered.map(p => {
+        const stockPercentage = (p.stock / p.maxStock) * 100;
+        const isOutOfStock = p.stock <= 0;
+        return `
+         <div class="tech-card product-card rounded-[2.5rem] p-8 flex flex-col relative group transition-all duration-500 hover:-translate-y-3 backdrop-blur-2xl" onmouseenter="playUiSound()">
+            <div class="corner-bracket cb-tl"></div>
+            <div class="corner-bracket cb-tr"></div>
+            <div class="corner-bracket cb-bl"></div>
+            <div class="corner-bracket cb-br"></div>
+
+            <div class="absolute -top-4 right-8 flex flex-col gap-2 z-20 items-end badge-container">
+              ${p.bestSeller ? '<div class="shimmer-badge text-white text-[11px] font-black font-fantasy uppercase tracking-[0.2em] px-5 py-1.5 rounded-full shadow-[0_0_25px_rgb(var(--primary-rgb)/0.8)] border border-white/20"><i class="fa-solid fa-fire mr-1"></i> Best Seller</div>' : ''}
+              ${p.sale ? '<div class="bg-yellow-500/20 text-yellow-500 text-[11px] font-black font-fantasy uppercase tracking-[0.2em] px-5 py-1.5 rounded-full shadow-[0_0_25px_rgba(234,179,8,0.3)] border border-yellow-500/50 backdrop-blur-sm"><i class="fa-solid fa-bolt mr-1"></i> On Sale</div>' : ''}
+            </div>
+            
+            <div class="flex justify-between items-baseline mb-8 pb-6 border-b border-white/10 relative z-10">
+              <div>
+                <h3 class="text-3xl font-bold font-fantasy text-white uppercase tracking-wider group-hover:text-primary transition-colors drop-shadow-md">${p.name}</h3>
+                <button onclick="openQuickView('${p.id}')" class="text-[11px] font-tech text-zinc-400 hover:text-white underline tracking-widest uppercase mt-1 transition-colors flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Quick View</button>
+              </div>
+              <span class="text-4xl font-extrabold font-tech text-primary drop-shadow-[0_0_15px_rgb(var(--primary-rgb)/0.7)]">$${p.price.toFixed(2)}</span>
+            </div>
+            
+            <div class="mb-8 space-y-4 flex-1 font-sans relative z-10">
+              ${p.features.map(f => `
+                <div class="flex items-center gap-3 text-zinc-300 text-base font-medium">
+                  <div class="w-6 h-6 rounded-full bg-primary-dark/60 border border-primary/40 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:border-primary transition-all shadow-[0_0_10px_rgb(var(--primary-rgb)/0.3)]">
+                    <i data-lucide="zap" class="text-primary w-3.5 h-3.5 drop-shadow-[0_0_5px_currentColor]"></i>
+                  </div>
+                  <span>${f}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="mb-6 font-sans relative z-10">
+              <div class="flex justify-between text-xs font-bold uppercase tracking-[0.15em] mb-2.5">
+                <span class="text-zinc-500">Key Stocks</span>
+                <span class="${p.stock < 10 ? 'text-primary-light font-bold animate-pulse drop-shadow-[0_0_5px_currentColor]' : 'text-[#00ff88] font-bold drop-shadow-[0_0_5px_#00ff88]'}">${p.stock} / ${p.maxStock}</span>
+              </div>
+              <div class="h-2.5 bg-black/80 rounded-full overflow-hidden shadow-inner border border-white/10 p-0.5">
+                <div class="h-full rounded-full transition-all duration-1000 ease-out ${p.stock < 10 ? 'bg-gradient-to-r from-primary to-primary-light shadow-[0_0_12px_rgb(var(--primary-rgb))]' : 'bg-gradient-to-r from-primary-dark via-primary to-primary-light shadow-[0_0_15px_rgb(var(--primary-rgb))]'}" style="width: ${stockPercentage}%"></div>
+              </div>
+            </div>
+
+            <div class="mb-6 font-sans flex items-center justify-between bg-black/50 p-3 rounded-2xl border border-white/10 shadow-inner relative z-10">
+              <div>
+                <span class="text-zinc-400 text-xs font-bold uppercase tracking-widest block">Quantity</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="updateQty('${p.id}', -1)" ${isOutOfStock ? 'disabled' : ''} class="w-8 h-8 rounded-full bg-white/5 hover:bg-primary/30 text-zinc-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-primary hover:shadow-[0_0_10px_rgb(var(--primary-rgb)/0.5)] transition-all cursor-pointer relative z-10 ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}">-</button>
+                <input type="number" id="qty-${p.id}" value="${isOutOfStock ? 0 : 1}" min="${isOutOfStock ? 0 : 1}" max="${p.stock}" class="w-8 bg-transparent text-white text-center font-bold font-tech text-lg outline-none border-none pointer-events-none drop-shadow-[0_0_8px_white]">
+                <button onclick="updateQty('${p.id}', 1)" ${isOutOfStock ? 'disabled' : ''} class="w-8 h-8 rounded-full bg-white/5 hover:bg-primary/30 text-zinc-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-primary hover:shadow-[0_0_10px_rgb(var(--primary-rgb)/0.5)] transition-all cursor-pointer relative z-10 ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}">+</button>
+              </div>
+            </div>
+
+            <button onclick="addToCart('${p.id}')" ${isOutOfStock ? 'disabled' : ''} 
+              class="glow-btn magnetic-btn w-full py-4 rounded-2xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all relative z-10 ${isOutOfStock ? 'bg-zinc-900/60 border border-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-white/10 hover:bg-gradient-to-r hover:from-primary-dark hover:via-primary hover:to-primary text-white border border-white/15 hover:border-white/40 shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:shadow-[0_0_35px_rgb(var(--primary-rgb)/0.7)] hover:scale-[1.02] active:scale-98'}">
+              <i data-lucide="shopping-cart" class="w-4 h-4 text-primary group-hover:text-white transition-colors"></i>
+              ${isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+      attachTiltEffects();
+      attachMagneticButtons();
+    }
+
+    window.updateQty = (id, change) => {
+      const input = document.getElementById(`qty-${id}`);
+      const product = products.find(p => String(p.id) === String(id));
+      if (!input || !product || product.stock <= 0) return;
+      
+      let newVal = parseInt(input.value) + change;
+      if (newVal < 1) newVal = 1; 
+      if (newVal > product.stock) newVal = product.stock; 
+      
+      input.value = newVal;
+    };
+
+    window.addToCart = (id) => {
+      const isLoggedIn = Auth.isLoggedIn();
+      
+      if (!isLoggedIn) {
+        addToast("You must log in first to buy a key! Redirecting...");
+        setTimeout(() => {
+          window.location.href = 'Login.html';
+        }, 2000);
+        return;
+      }
+
+      const product = products.find(p => String(p.id) === String(id));
+      if (!product) return;
+
+      if (product.stock <= 0) {
+        addToast("This product is out of stock!");
+        playUiSound();
+        return;
+      }
+
+      playUiSound();
+      const qtyInput = document.getElementById(`qty-${id}`);
+      const addedQty = qtyInput ? parseInt(qtyInput.value) : 1;
+
+      const exists = cart.find(item => String(item.id) === String(id));
+      
+      if (exists) {
+        if (exists.quantity + addedQty > product.stock) {
+            addToast(`Cannot add more. Only ${product.stock} in stock!`);
+            return;
+        }
+        exists.quantity += addedQty;
+      } else {
+        cart.push({ ...product, quantity: addedQty });
+      }
+      
+      addToast(`Added ${addedQty}x ${product.name} to cart`);
+      updateCartUI();
+      
+      leftAnime.classList.add('scale-105');
+      setTimeout(() => leftAnime.classList.remove('scale-105'), 300);
+      
+      if (qtyInput) qtyInput.value = 1; 
+    };
+
+    window.removeFromCart = (id) => {
+      playUiSound();
+      cart = cart.filter(item => String(item.id) !== String(id));
+      updateCartUI();
+    };
+
+    function updateCartUI() {
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      if (count > 0) {
+        cartBadge.textContent = count;
+        cartBadge.classList.remove('hidden');
+        cartBadge.classList.add('animate-bounce');
+        setTimeout(() => cartBadge.classList.remove('animate-bounce'), 1000);
+      } else {
+        cartBadge.classList.add('hidden');
+      }
+
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      if (cart.length === 0) {
+        cartItems.innerHTML = '<p class="text-center text-zinc-500 mt-10 text-lg font-serif italic">Your cart is empty.</p>';
+        checkoutBtn.disabled = true;
+      } else {
+        checkoutBtn.disabled = false;
+        cartItems.innerHTML = cart.map(item => `
+          <div class="bg-black/60 p-4 rounded-2xl border border-white/10 flex justify-between items-center transition-all hover:border-primary/50 shadow-md backdrop-blur-md">
+            <div>
+              <h4 class="font-bold font-fantasy text-white text-base uppercase tracking-wider">${item.name}</h4>
+              <p class="text-xs text-zinc-400 font-sans mt-0.5">Qty: <span class="text-white font-bold">${item.quantity}</span></p>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="font-bold font-tech text-primary text-lg drop-shadow-[0_0_10px_rgb(var(--primary-rgb)/0.6)]">$${(item.price * item.quantity).toFixed(2)}</span>
+              <button onclick="removeFromCart('${item.id}')" class="w-8 h-8 rounded-full bg-white/5 hover:bg-primary/30 text-zinc-500 hover:text-white transition-all flex items-center justify-center border border-transparent hover:border-primary/50 shadow-[0_0_5px_rgba(0,0,0,0.5)] hover:shadow-[0_0_10px_rgb(var(--primary-rgb)/0.5)]"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      
+      const savedCoupon = localStorage.getItem('h4xstore_checkout_coupon');
+      if (savedCoupon || count >= 5) {
+        discountRow.classList.remove('hidden');
+        discountRow.innerHTML = `<span class="text-zinc-400 font-sans text-sm">Discounts / Promos</span><span id="cart-discount" class="text-[#00ff88] text-sm font-bold tracking-wider">Calculated at Checkout</span>`;
+      } else {
+        discountRow.classList.add('hidden');
+      }
+      
+      cartTotal.textContent = `$${subtotal.toFixed(2)}`;
+      lucide.createIcons();
+    }
+
+    function toggleCart() {
+      playUiSound();
+      const sidebar = document.getElementById('cart-sidebar');
+      const overlay = document.getElementById('cart-overlay');
+      const isOpen = !sidebar.classList.contains('translate-x-full');
+      
+      if (isOpen) {
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('translate-x-full');
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    function addToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'flex items-center gap-3 px-6 py-4 bg-[#080808]/95 backdrop-blur-xl border border-primary/60 rounded-2xl shadow-[0_0_35px_rgb(var(--primary-rgb)/0.5)] text-white translate-x-[120%] transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) font-sans font-bold text-base gpu-accel';
+      toast.innerHTML = `<div class="w-7 h-7 rounded-full bg-primary/20 border border-primary flex items-center justify-center shrink-0 shadow-[0_0_10px_rgb(var(--primary-rgb)/0.3)]"><i data-lucide="check" class="text-primary w-4 h-4 drop-shadow-[0_0_5px_currentColor]"></i></div> <span>${message}</span>`;
+      toastContainer.appendChild(toast);
+      lucide.createIcons();
+      
+      requestAnimationFrame(() => toast.classList.remove('translate-x-[120%]'));
+
+      setTimeout(() => {
+        toast.classList.add('translate-x-[120%]');
+        setTimeout(() => toast.remove(), 500);
+      }, 4000);
+    }
+
+    document.getElementById('cart-toggle').addEventListener('click', toggleCart);
+    document.getElementById('cart-close').addEventListener('click', toggleCart);
+    document.getElementById('cart-overlay').addEventListener('click', toggleCart);
+    
+    document.getElementById('apply-promo').addEventListener('click', () => {
+      const promoInput = document.getElementById('promo-input').value.trim().toUpperCase();
+      
+      if (promoInput) {
+        localStorage.setItem('h4xstore_checkout_coupon', promoInput);
+        updateCartUI();
+        addToast(`Cipher '${promoInput}' saved! It will be applied securely at checkout.`);
+        playUiSound();
+      } else {
+        localStorage.removeItem('h4xstore_checkout_coupon');
+        updateCartUI();
+        addToast('Cipher code cleared.');
+        playUiSound();
+      }
+    });
+
+    checkoutBtn.addEventListener('click', () => {
+      playUiSound();
+      localStorage.setItem('h4xstore_checkout_cart', JSON.stringify(cart));
+      window.location.href = 'Checkout.html'; 
+    });
+
+    let isTrackingMouse = false;
+    window.addEventListener('mousemove', e => {
+      if (!isTrackingMouse) {
+        window.requestAnimationFrame(() => {
+          document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+          document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+          isTrackingMouse = false;
+        });
+        isTrackingMouse = true;
+      }
+    }, { passive: true });
+
+    let scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    window.addEventListener('resize', () => {
+        scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    }, { passive: true });
+
+    let isScrolling = false;
+    window.addEventListener('scroll', () => {
+      if (!isScrolling) {
+        window.requestAnimationFrame(() => {
+          const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+          const scrolled = (winScroll / (scrollHeight || 1)) * 100;
+          document.getElementById('scroll-progress').style.width = scrolled + '%';
+
+          const backBtn = document.getElementById('back-to-top');
+          if (winScroll > 500) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+          isScrolling = false;
+        });
+        isScrolling = true;
+      }
+    }, { passive: true });
+
+    window.toggleFaq = (element) => {
+      playUiSound();
+      const isActive = element.classList.contains('active');
+      document.querySelectorAll('.faq-item').forEach(item => item.classList.remove('active'));
+      if (!isActive) element.classList.add('active');
+    };
+
+    function initCounters() {
+      const counters = document.querySelectorAll('.counter');
+      counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const duration = 2000;
+        let startTimestamp = null;
+        
+        const step = (timestamp) => {
+          if (!startTimestamp) startTimestamp = timestamp;
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+          const current = progress * target;
+          
+          counter.innerText = Number.isInteger(target) ? Math.floor(current) : current.toFixed(1);
+          
+          if (progress < 1) {
+            window.requestAnimationFrame(step);
+          } else {
+            counter.innerText = target;
+          }
+        };
+        window.requestAnimationFrame(step);
+      });
+    }
+
+    function attachMagneticButtons() {
+      document.querySelectorAll('.magnetic-btn').forEach(btn => {
+        let hoverRafId = null;
+        let cachedRect = null;
+        
+        btn.addEventListener('mouseenter', () => {
+            cachedRect = btn.getBoundingClientRect();
+        });
+
+        btn.addEventListener('mousemove', e => {
+          if (!hoverRafId && cachedRect) {
+            hoverRafId = requestAnimationFrame(() => {
+              const x = e.clientX - cachedRect.left - cachedRect.width / 2;
+              const y = e.clientY - cachedRect.top - cachedRect.height / 2;
+              btn.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.02)`;
+              hoverRafId = null;
+            });
+          }
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+          if (hoverRafId) { cancelAnimationFrame(hoverRafId); hoverRafId = null; }
+          btn.style.transform = 'translate(0px, 0px) scale(1)';
+        });
+      });
+    }
+
+    const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, observerOptions);
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    function attachTiltEffects() {
+      document.querySelectorAll('.tech-card').forEach(card => {
+        let tiltRafId = null;
+        let cachedRect = null;
+        
+        card.addEventListener('mouseenter', () => {
+            cachedRect = card.getBoundingClientRect();
+        });
+
+        card.addEventListener('mousemove', e => {
+          if (!tiltRafId && cachedRect) {
+            tiltRafId = requestAnimationFrame(() => {
+              const x = e.clientX - cachedRect.left;
+              const y = e.clientY - cachedRect.top;
+              const centerX = cachedRect.width / 2;
+              const centerY = cachedRect.height / 2;
+              const rotateX = ((y - centerY) / centerY) * -6;
+              const rotateY = ((x - centerX) / centerX) * 6;
+              card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+              tiltRafId = null;
+            });
+          }
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          if (tiltRafId) { cancelAnimationFrame(tiltRafId); tiltRafId = null; }
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+        });
+      });
+    }
+
+    // Call render once, then wait for API fetch
+    renderBroadcasts(); 
+    lucide.createIcons();
+    attachMagneticButtons();
+     // --- REAL-TIME KOMERZA STOCK SYNC FOR FRONTEND ---
+     async function syncStorefrontStock() {
+        try {
+            if (typeof window.getKomerzaStoreId !== 'function') return;
+            const STORE_ID = await window.getKomerzaStoreId();
+            if (!STORE_ID) return;
+            
+            const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products?PageSize=100`, {
+                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
+            });
+            
+            // Load local state to apply Hot/Sale/Hide UI flags
+            const state = typeof loadStoreState === 'function' ? loadStoreState() : null;
+
+            if (res.ok) {
+                const payload = await res.json();
+                const products = payload.data || [];
+                
+                // Iterate over all product cards on the storefront
+                document.querySelectorAll('.product-card, .variant-card').forEach(card => {
+                    const titleEl = card.querySelector('.product-title, h3, .variant-name');
+                    if (!titleEl) return;
+                    const title = titleEl.textContent.trim().toLowerCase();
+                    
+                    // --- FEATURE TEXT UPDATE FIX (Matches Uploaded Image) ---
+                    const listItems = [...card.querySelectorAll('.mb-8 span')]
+    .filter(el => !el.closest('.flex.justify-between'));
+                    const setFeatures = (features) => {
+    features.forEach((feature, i) => {
+        if (listItems[i]) {
+            listItems[i].textContent = feature;
+        }
+    });
+};
+
+if (title.includes('lifetime')) {
+    setFeatures([
+        "Lifetime Access",
+        "Unlimited Updates",
+        "Works on All Supported Scripts",
+        "Premium Discord Role",
+        "One-Time Purchase",
+        "Priority Support",
+        "Exclusive Content",
+        "Early Access to New Features",
+        "Access to Beta Testing",
+        "Special Recognition in Community"
+    ]);
+
+} else if (title.includes('2 week') || title.includes('14 day')) {
+    setFeatures([
+        "14 Days Access",
+        "Unlimited Updates",
+        "Works on All Supported Scripts",
+        "Buyer Discord Role",
+        "Renew Anytime"
+    ]);
+
+} else if (title.includes('month') || title.includes('30 day')) {
+    setFeatures([
+        "30 Days Access",
+        "Unlimited Updates",
+        "Works on All Supported Scripts",
+        "Buyer Discord Role",
+        "Renew Anytime"
+    ]);
+}
+
+                    let matchedVariant = null;
+                    let localVariant = null;
+
+                    // Match with Komerza Live Data (For Price & Stock)
+                    for (let p of products) {
+                        for (let v of (p.variants || [])) {
+                            const vName = v.name.toLowerCase();
+                            const pName = p.name.toLowerCase();
+                            if (vName === title || `${pName} - ${vName}` === title || pName === title || title.includes(vName)) {
+                                matchedVariant = v; break;
+                            }
+                        }
+                        if (matchedVariant) break;
+                    }
+
+                    // Match with Local Store State (For Hot/Sale/Hide flags)
+                    if (state && state.products) {
+                        for (let p of state.products) {
+                            for (let v of (p.variants || [])) {
+                                const vName = v.name.toLowerCase();
+                                const pName = p.name.toLowerCase();
+                                if (vName === title || `${pName} - ${vName}` === title || pName === title || title.includes(vName)) {
+                                    localVariant = v; break;
+                                }
+                            }
+                            if (localVariant) break;
+                        }
+                    }
+                    
+                    // 1. HIDDEN FLAG CHECK
+                    const isHidden = localVariant ? localVariant.isHidden : false;
+                    if (isHidden) {
+                        card.style.display = 'none';
+                        return; // Stop processing this card
+                    } else {
+                        card.style.display = ''; 
+                    }
+
+                    if (matchedVariant) {
+                        // 2. LIVE STOCK & MAXIMUMS
+                        const stockEl = card.querySelector('.stock-display, .stock-count, .stock-text, p.text-[#00ff88]');
+                        const buyBtn = card.querySelector('.buy-btn, button[onclick*="addToCart"], .checkout-btn');
+                        
+                        if (matchedVariant.stockMode === 1 && matchedVariant.stock <= 0) {
+                            if (stockEl) {
+                                stockEl.innerHTML = `<span class="text-primary font-bold tracking-widest uppercase text-xs"><i class="fa-solid fa-xmark mr-1"></i> Out of Stock</span>`;
+                            }
+                            if (buyBtn) {
+                                buyBtn.disabled = true;
+                                buyBtn.textContent = "Sold Out";
+                                buyBtn.className = "w-full py-3 bg-zinc-800/50 text-zinc-500 rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] border border-white/5 cursor-not-allowed transition-all mt-6";
+                                buyBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); return false; };
+                            }
+                        } else {
+                            if (stockEl) {
+                                const stockText = matchedVariant.stockMode === 1 ? matchedVariant.stock : '∞';
+                                const maxText = (matchedVariant.maximumQuantity && matchedVariant.maximumQuantity > 0) ? ` (Max: ${matchedVariant.maximumQuantity})` : '';
+                                stockEl.innerHTML = `<span class="text-[#00ff88] font-bold tracking-widest uppercase text-xs"><i class="fa-solid fa-check mr-1"></i> ${stockText} in stock${maxText}</span>`;
+                            }
+                            if (buyBtn && buyBtn.disabled) {
+                                buyBtn.disabled = false;
+                                buyBtn.textContent = "Purchase Access";
+                                buyBtn.className = "w-full py-3 bg-primary/20 hover:bg-primary text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] border border-primary/50 hover:shadow-[0_0_20px_rgba(255,26,26,0.4)] transition-all mt-6";
+                            }
+                        }
+
+                        // 3. LIVE PRICING
+                        Array.from(card.querySelectorAll('*')).forEach(el => {
+                            if (el.children.length === 0) {
+                                const text = el.textContent.trim();
+                                if (text.includes('$')) {
+                                    const numMatch = text.match(/[\d.]+/);
+                                    if (numMatch && !isNaN(parseFloat(numMatch[0]))) {
+                                        el.textContent = '$' + matchedVariant.cost.toFixed(2);
+                                    }
+                                }
+                            }
+                        });
+
+                        // 4. HOT/SALE BADGES (Read from Local State)
+                        const isHot = localVariant ? localVariant.isHot : false;
+                        const isSale = localVariant ? localVariant.isSale : false;
+
+                        let badgeContainer = card.querySelector('.badge-container');
+                        if (!badgeContainer) {
+                            badgeContainer = document.createElement('div');
+                            badgeContainer.className = 'badge-container absolute -top-4 left-6 flex gap-2 z-10 flex-col items-end';
+                            card.classList.add('relative');
+                            card.appendChild(badgeContainer);
+                        }
+                        badgeContainer.innerHTML = ''; 
+                        
+                        if (isHot) {
+                            badgeContainer.innerHTML += `<span class="bg-primary/20 text-primary border border-primary/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-[0_0_10px_rgba(255,26,26,0.3)] backdrop-blur-sm"><i class="fa-solid fa-fire mr-1"></i> Hot</span>`;
+                        }
+                        if (isSale) {
+                            badgeContainer.innerHTML += `<span class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.3)] backdrop-blur-sm"><i class="fa-solid fa-bolt mr-1"></i> Sale</span>`;
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.warn("Komerza Live Stock Sync Failed:", err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Trigger sync instantly, and then every 15s to keep inventory fresh
+        setTimeout(syncStorefrontStock, 500);
+        setInterval(syncStorefrontStock, 15000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H4xStore - System Error</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { fantasy: ['"Cinzel Decorative"'], tech: ['"Rajdhani"'] },
+          colors: { primary: '#ff1a1a', alert: '#fbbf24' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #141405 100%); font-family: 'Rajdhani', sans-serif; min-height: 100vh; }
+    .tech-card { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(251, 191, 36, 0.3); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(251, 191, 36, 0.05); }
+    .glitch { position: relative; }
+    .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; opacity: 0.8; }
+    .glitch::before { left: 2px; text-shadow: -2px 0 red; clip: rect(24px, 550px, 90px, 0); animation: glitch-anim 2s infinite linear alternate-reverse; }
+    .glitch::after { left: -2px; text-shadow: -2px 0 blue; clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse; }
+    @keyframes glitch-anim { 0% { clip: rect(10px, 9999px, 44px, 0); } 100% { clip: rect(65px, 9999px, 110px, 0); } }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+  <div class="tech-card rounded-[2.5rem] p-10 md:p-14 max-w-2xl w-full text-center">
+    <i data-lucide="triangle-alert" class="w-20 h-20 text-alert mx-auto mb-6 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]"></i>
+    
+    <h1 class="text-6xl font-black font-fantasy text-white uppercase tracking-wider mb-2 glitch" data-text="404">404</h1>
+    <h2 class="text-3xl font-bold font-fantasy text-alert uppercase tracking-wider mb-6">System Malfunction</h2>
+    
+    <p class="text-zinc-400 text-lg md:text-xl mb-10">
+      The requested sector does not exist or the network node has been compromised. The architecture cannot route your request.
+    </p>
+
+    <button onclick="window.location.href='index.html'" class="px-10 py-4 bg-white/5 hover:bg-alert hover:text-black text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-alert">
+  Re-Establish Connection
+</button>
+  </div>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+openapi: 3.0.3
+info:
+  title: H4xStore Backend API
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+  /users:
+    get:
+      summary: List users (admin)
+      parameters:
+        - name: page; in: query; schema: { type: integer }
+        - name: perPage; in: query; schema: { type: integer }
+        - name: q; in: query; schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /products:
+    get:
+      summary: List products
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: perPage
+          in: query
+          schema: { type: integer }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: categories
+          in: query
+          schema:
+            type: string
+        - name: visible
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+    post:
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /products/{id}:
+    get:
+      summary: Get product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+    patch:
+      summary: Update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+    delete:
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+  /products/{productId}/variants:
+    get:
+      summary: List variants
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariantListResponse'
+    post:
+      summary: Create variant
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariantCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariantResponse'
+  /products/{productId}/variants/{id}:
+    patch:
+      summary: Update variant
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariantUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariantResponse'
+    delete:
+      summary: Delete variant
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+ 
+components:
+  schemas:
+    Image:
+      type: object
+      properties:
+        url: { type: string }
+        filename: { type: string }
+    ProductCreate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: string }
+        currency: { type: string }
+        featured: { type: boolean }
+        visible: { type: boolean }
+        categories:
+          type: array
+          items: { type: string }
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+    ProductUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: string }
+        currency: { type: string }
+        featured: { type: boolean }
+        visible: { type: boolean }
+        categories:
+          type: array
+          items: { type: string }
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string }
+        price: { type: string }
+        currency: { type: string }
+        featured: { type: boolean }
+        visible: { type: boolean }
+        categories:
+          type: array
+          items: { type: string }
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+        inventory:
+          type: object
+          properties:
+            stock: { type: integer }
+            reserved: { type: integer }
+            updatedAt: { type: string, format: date-time }
+          nullable: true
+    ProductResponse:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/Product'
+    ProductListResponse:
+      type: object
+      properties:
+        total: { type: integer }
+        page: { type: integer }
+        perPage: { type: integer }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    VariantCreate:
+      type: object
+      properties:
+        sku: { type: string }
+        name: { type: string }
+        price: { type: string }
+        stock: { type: integer }
+        meta:
+          type: object
+    VariantUpdate:
+      type: object
+      properties:
+        sku: { type: string }
+        name: { type: string }
+        price: { type: string }
+        stock: { type: integer }
+        meta:
+          type: object
+    Variant:
+      type: object
+      properties:
+        id: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        price: { type: string }
+        stock: { type: integer }
+        meta:
+          type: object
+    VariantResponse:
+      type: object
+      properties:
+        variant:
+          $ref: '#/components/schemas/Variant'
+    VariantListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+/orders:
+  post:
+    summary: Create order
+/webhooks/komerza:
+  post:
+    summary: Komerza webhook
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object

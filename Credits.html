@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H4xStore - Credits</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; img-src 'self' data: https:;">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Lato"', '"Rajdhani"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            fantasy: ['"Cinzel Decorative"', 'serif'],
+            tech: ['"Rajdhani"', 'sans-serif'],
+          },
+          colors: {
+            primary: '#ff1a1a',
+            'deep-black': '#000000',
+          },
+          animation: {
+            'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'blob': 'blob 7s infinite',
+            'pulse-glow': 'pulseGlow 3s infinite',
+          },
+          keyframes: {
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(0.5)' },
+              '100%': { opacity: '1', transform: 'scale(1)' }
+            },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 20px rgba(255, 26, 26, 0.4), inset 0 0 20px rgba(255, 26, 26, 0.1)' },
+              '50%': { boxShadow: '0 0 40px rgba(255, 26, 26, 0.8), inset 0 0 40px rgba(255, 26, 26, 0.3)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --primary: #ff1a1a;
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+    }
+
+    body {
+      background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #140303 100%);
+      color: #E2E8F0;
+      font-family: 'Lato', 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    
+    ::selection {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .mouse-spotlight {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 26, 26, 0.07), transparent 80%);
+    }
+
+    .tech-card {
+      background: rgba(5, 5, 5, 0.15);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 26, 26, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.1); 
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.05);
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, background 0.4s, border-color 0.4s;
+    }
+    
+    @keyframes slideUp {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tech-card:hover {
+      background: rgba(18, 5, 5, 0.25);
+      border-color: rgba(255, 26, 26, 0.6);
+      box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 26, 26, 0.3);
+      transform: translateY(-8px) scale(1.02);
+    }
+
+    .owner-card {
+      background: rgba(20, 0, 0, 0.4);
+      border: 1px solid rgba(255, 26, 26, 0.8);
+      border-top: 2px solid #ff1a1a;
+      border-bottom: 2px solid #ff1a1a;
+      box-shadow: 0 0 30px rgba(255, 26, 26, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.2);
+    }
+    
+    .owner-card:hover {
+      transform: translateY(-10px) scale(1.05);
+      background: rgba(30, 0, 0, 0.6);
+      box-shadow: 0 0 50px rgba(255, 26, 26, 0.8), inset 0 0 30px rgba(255, 26, 26, 0.4);
+    }
+
+    .text-gradient-magic {
+      background: linear-gradient(-45deg, #ff1a1a, #ffffff, #ff4d4d, #990000);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientX 4s ease infinite;
+    }
+
+    @keyframes gradientX {
+      0%, 100% { background-position: left center }
+      50% { background-position: right center }
+    }
+
+    @keyframes moveGrid {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(48px); }
+    }
+
+    @keyframes particle-drift {
+      0% { transform: translateY(100vh) translateX(0) scale(0) rotate(0deg); opacity: 0; }
+      20% { opacity: 0.6; transform: translateY(80vh) translateX(20px) scale(1) rotate(45deg); }
+      80% { opacity: 0.6; }
+      100% { transform: translateY(-20vh) translateX(-20px) scale(0.5) rotate(180deg); opacity: 0; }
+    }
+
+    .scanlines {
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3));
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+      animation: particle-drift linear infinite;
+    }
+
+    .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.25;
+      animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: -2;
+      mix-blend-mode: screen; 
+    }
+  </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-primary selection:text-white antialiased flex flex-col">
+
+  <!-- Mouse Spotlight -->
+  <div class="mouse-spotlight"></div>
+
+  <!-- Background Effects -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000]">
+    <div class="absolute inset-0 z-10 scanlines opacity-40"></div>
+    <div class="absolute inset-[-100%] h-[300%] bg-[linear-gradient(to_right,#ff1a1a15_1px,transparent_1px),linear-gradient(to_bottom,#ff1a1a15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_80%,transparent_100%)] opacity-40" style="animation: moveGrid 3s linear infinite"></div>
+    
+    <div class="aurora-blob bg-red-900 w-96 h-96 top-0 left-1/4 animate-blob"></div>
+    <div class="aurora-blob bg-neutral-800 w-96 h-96 top-1/4 right-1/4 animate-blob" style="animation-delay: 2s"></div>
+    <div class="aurora-blob bg-rose-950 w-96 h-96 bottom-0 left-1/3 animate-blob" style="animation-delay: 4s"></div>
+    
+    <div class="particle w-1 h-1 left-[20%]" style="animation-duration: 15s; animation-delay: 0s;"></div>
+    <div class="particle w-2 h-2 left-[50%]" style="animation-duration: 12s; animation-delay: 4s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[80%]" style="animation-duration: 18s; animation-delay: 2s;"></div>
+  </div>
+
+<nav class="fixed top-6 left-0 right-0 z-50 px-4 md:px-0 transition-all duration-300">
+    <div class="max-w-6xl mx-auto tech-card rounded-full px-8 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/10 hover:border-red-500/30">
+      <div class="flex items-center gap-3 cursor-pointer group" onclick="window.location.href='index.html'">
+        <img src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image3.png" alt="Logo" class="w-11 h-11 object-contain drop-shadow-[0_0_15px_rgba(255,26,26,0.8)] group-hover:scale-110 transition-transform duration-500">
+        <span class="text-2xl md:text-3xl font-black font-fantasy text-white uppercase tracking-wider drop-shadow-[0_0_10px_rgba(255,26,26,0.5)]">
+          H4x<span class="text-gradient-magic">Store</span>
+        </span>
+      </div>
+      <a href="index.html" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold tracking-widest uppercase font-fantasy">
+        <i data-lucide="arrow-left" class="w-4 h-4 text-primary"></i> Return
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="relative z-20 flex-1 flex flex-col items-center justify-center pt-40 pb-20 px-4">
+    <div class="text-center mb-16 animate-pop-in">
+      
+      <h1 class="font-fantasy font-black text-5xl md:text-7xl uppercase tracking-tight text-white drop-shadow-2xl mb-4">
+        Meet The <span class="text-gradient-magic">Team</span>
+      </h1>
+      <div class="w-24 h-1 bg-gradient-to-r from-primary via-white to-primary mx-auto rounded-full opacity-75 shadow-[0_0_15px_rgba(255,26,26,0.8)]"></div>
+    </div>
+
+    <div class="max-w-5xl w-full mx-auto" id="credits-container">
+      <!-- Content Grid -->
+      <div id="team-grid" class="flex flex-col items-center gap-12 w-full">
+        <!-- Owner container -->
+        <div id="owner-container" class="w-full max-w-2xl perspective-[1000px]"></div>
+        
+        <!-- Co-owners container -->
+        <div id="co-owner-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-black/80 border-t border-white/10 py-8 relative z-20 mt-auto backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center font-sans text-xs font-bold text-gray-500 tracking-[0.2em] uppercase">
+      <p>© 2026 H4xStore. All rights reserved.</p>
+      <div class="flex items-center gap-2 mt-4 md:mt-0">
+        <i data-lucide="terminal" class="w-4 h-4 text-primary"></i> <span>Developed by Mallo</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Spotlight Tracking Effect
+    window.addEventListener('mousemove', e => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
+
+    // Hardcoded Team Data Array
+    const team = [
+      {
+        username: "Mallo",
+        avatar: "Owner.png", 
+        role: "Owner / Lead Dev",
+        type: "owner"
+      },
+      {
+        username: "Krafty Cheese", 
+        avatar: "CoOwner2.png", 
+        role: "Co Owner / Dev",
+        type: "co-owner"
+      },
+      {
+        username: "CRAZY", 
+        avatar: "CoOwner1.png", 
+        role: "Co Owner / Dev",
+        type: "co-owner"
+      }
+    ];
+
+    // Build the UI instantly from the hardcoded array
+    function initializeCredits() {
+      const ownerContainer = document.getElementById('owner-container');
+      const coOwnerContainer = document.getElementById('co-owner-container');
+
+      team.forEach((user, index) => {
+        const delay = index * 150; // Staggered entry animation delay
+        
+        if (user.type === 'owner') {
+          ownerContainer.innerHTML = `
+            <div class="owner-card tech-card rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8 transition-all duration-700 opacity-0 translate-y-10" style="animation: slideUp 0.8s forwards ${delay}ms, pulseGlow 4s infinite;">
+              <div class="relative group shrink-0">
+                <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-[#ff1a1a] rounded-full blur opacity-70 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-spin-slow"></div>
+                <img src="${user.avatar}" alt="${user.username}" class="relative w-36 h-36 md:w-48 md:h-48 rounded-full object-cover border-2 border-white/20 z-10 shadow-[0_0_30px_rgba(255,26,26,0.5)]">
+                <div class="absolute -top-4 -right-4 bg-black border-2 border-primary w-12 h-12 rounded-full flex items-center justify-center z-20 shadow-[0_0_15px_#ff1a1a]">
+                  <i data-lucide="crown" class="w-6 h-6 text-[#ffd700] drop-shadow-[0_0_8px_#ffd700]"></i>
+                </div>
+              </div>
+              <div class="text-center md:text-left flex-1">
+                <span class="inline-block px-4 py-1.5 rounded-full bg-primary/20 text-primary font-sans font-black tracking-[0.25em] text-xs uppercase mb-3 border border-primary/50 shadow-[0_0_10px_rgba(255,26,26,0.3)]">
+                  ${user.role}
+                </span>
+                <h2 class="font-fantasy font-bold text-4xl md:text-6xl text-white uppercase tracking-wider mb-2 drop-shadow-[0_0_15px_rgba(255,26,26,0.5)] group-hover:text-primary transition-colors">
+                  ${user.username}
+                </h2>
+                <div class="h-1 w-full bg-gradient-to-r from-primary via-white to-transparent mt-4 opacity-50"></div>
+              </div>
+            </div>
+          `;
+        } else {
+          coOwnerContainer.innerHTML += `
+            <div class="tech-card rounded-[2.5rem] p-8 flex flex-col items-center text-center opacity-0 translate-y-10" style="animation: slideUp 0.8s forwards ${delay}ms;">
+              <div class="relative group mb-6">
+                <div class="absolute -inset-0.5 bg-white/20 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500"></div>
+                <img src="${user.avatar}" alt="${user.username}" class="relative w-28 h-28 rounded-full object-cover border border-white/10 z-10 shadow-lg group-hover:border-primary transition-colors">
+                <div class="absolute -bottom-2 right-0 bg-black border border-white/20 w-8 h-8 rounded-full flex items-center justify-center z-20">
+                  <i data-lucide="code" class="w-4 h-4 text-zinc-300"></i>
+                </div>
+              </div>
+              <span class="text-xs font-sans font-bold tracking-[0.2em] text-zinc-400 uppercase mb-2">
+                ${user.role}
+              </span>
+              <h3 class="font-fantasy font-bold text-2xl md:text-3xl text-white uppercase tracking-wider group-hover:text-primary transition-colors">
+                ${user.username}
+              </h3>
+            </div>
+          `;
+        }
+      });
+      
+      // Render layout icons
+      lucide.createIcons();
+      
+      // Fixed 3D Perspective Card Tilt Effects
+      document.querySelectorAll('.tech-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const intensity = card.classList.contains('owner-card') ? 8 : 4;
+          const rotateX = ((y - centerY) / centerY) * -intensity;
+          const rotateY = ((x - centerX) / centerX) * intensity;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(${card.classList.contains('owner-card') ? '1.02' : '1'})`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0) scale(1)';
+        });
+      });
+    }
+
+    // Run initialization immediately on document load
+    window.addEventListener('DOMContentLoaded', initializeCredits);
+  </script>
+</body>
+</html>

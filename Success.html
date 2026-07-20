@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- SECURITY & DATABASE SYNC -->
+  <script src="auth.js"></script>
+  
+    <!-- AFFILIATE TRACKING SYNC -->
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        localStorage.setItem('h4x_affiliate_ref', ref);
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Successful</title>
+  
+  <!-- PATCHED CSP: Required to prevent Chrome from blocking the page after redirect -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { fantasy: ['"Cinzel Decorative"'], tech: ['"Rajdhani"'] }, colors: { primary: '#ff1a1a', success: '#00ff88' } } }
+    }
+  </script>
+
+  <style>
+    body { background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #05140a 100%); font-family: 'Rajdhani', sans-serif; min-height: 100vh; }
+    .tech-card { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 136, 0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,255,136,0.05); }
+    @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4 relative overflow-hidden">
+
+  <!-- Ambient Success Glow -->
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-success/20 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
+
+  <main class="tech-card rounded-[2.5rem] p-10 md:p-14 max-w-xl w-full text-center relative z-10 animate-[popIn_0.6s_ease-out_forwards]">
+    
+    <div class="w-24 h-24 rounded-full bg-success/10 border border-success/40 flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(0,255,136,0.4)]">
+      <i data-lucide="check-circle" class="w-12 h-12 text-success drop-shadow-[0_0_10px_#00ff88]"></i>
+    </div>
+    
+    <h1 class="text-4xl md:text-5xl font-black font-fantasy text-white uppercase tracking-wider mb-4">
+      Payment <span class="text-success italic">Verified</span>
+    </h1>
+    
+    <p class="text-zinc-400 text-lg md:text-xl mb-8 leading-relaxed">
+      Your transaction was successfully processed by our secure gateway. Your dashboard access has been unlocked.
+    </p>
+
+    <!-- Gracefully repurposed UI block replacing the local storage key generator -->
+    <div class="bg-black/40 border border-success/20 rounded-2xl p-6 mb-8 relative group overflow-hidden text-left">
+      <div class="absolute inset-0 bg-success/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <p class="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-2">Delivery Status</p>
+      <div class="flex items-center justify-between gap-4">
+        <code class="text-white font-mono text-xl tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+          CHECK-YOUR-EMAIL
+        </code>
+        <div class="text-success p-2">
+          <i data-lucide="mail" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="window.location.href='Dashboard.html'" class="w-full py-5 bg-gradient-to-r from-green-800 via-success to-green-800 hover:from-success hover:to-success text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.3em] shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-all border border-success/50 hover:shadow-[0_0_30px_rgba(0,255,136,0.6)]">
+      Initialize Dashboard
+    </button>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Security Check: Did they actually come from our checkout page?
+      const initiated = localStorage.getItem('checkout_initiated');
+      
+      if (initiated === 'true') {
+        // Clear the flag so they can't just refresh this page to trigger the script again
+        localStorage.removeItem('checkout_initiated');
+        localStorage.removeItem('h4xstore_checkout_cart');
+        
+        // SECURE DATABASE SYNC: Grant Dashboard Access
+        const user = Auth.getCurrentUser();
+        if (user && !user.ownsKey) {
+          user.ownsKey = true; // Update local session state
+          Auth.setSession(user); 
+          
+          // Update the Encrypted Database Vault
+          const users = Auth.getUsers();
+          const dbIndex = users.findIndex(u => u.id === user.id);
+          if (dbIndex > -1) {
+            users[dbIndex].ownsKey = true;
+            Auth.saveUsers(users); 
+          }
+        }
+      } else {
+        console.warn("Security Event: Invalid Access Vector Detected.");
+      }
+    });
+  </script>
+</body>
+</html>

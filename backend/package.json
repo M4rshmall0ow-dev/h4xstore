@@ -1,0 +1,39 @@
+{
+  "name": "h4xstore-backend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --runInBand"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.488.0",
+    "@aws-sdk/s3-request-presigner": "^3.488.0",
+    "@prisma/client": "^4.16.0",
+    "@supabase/supabase-js": "^2.31.0",
+    "argon2": "^0.28.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^6.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.3",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nodemon": "^2.0.0",
+    "prisma": "^4.16.0",
+    "supertest": "^6.3.0"
+  }
+}

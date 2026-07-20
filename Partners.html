@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H4xStore - Partners</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Centralized State Management -->
+  <script src="store-state.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Lato"', '"Rajdhani"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            fantasy: ['"Cinzel Decorative"', 'serif'],
+            tech: ['"Rajdhani"', 'sans-serif'],
+          },
+          colors: {
+            primary: '#ff1a1a',
+            'fantasy-red': '#ff1a1a',
+            'deep-black': '#000000',
+            'midnight': '#080808',
+          },
+          animation: {
+            'float': 'float 8s ease-in-out infinite',
+            'float-slow': 'floatSlow 6s ease-in-out infinite',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'gradient-x': 'gradientX 5s ease infinite',
+            'blob': 'blob 7s infinite',
+          },
+          keyframes: {
+            float: { '0%, 100%': { transform: 'translateY(0) rotate(0deg)' }, '50%': { transform: 'translateY(-20px) rotate(1deg)' } },
+            floatSlow: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-15px)' } },
+            shimmer: { '0%': { backgroundPosition: '-1000px 0' }, '100%': { backgroundPosition: '1000px 0' } },
+            popIn: { '0%': { opacity: '0', transform: 'scale(0.5)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(40px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            gradientX: { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } },
+            blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { --primary: #ff1a1a; --mouse-x: 50%; --mouse-y: 50%; }
+    body { background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #140303 100%); color: #E2E8F0; overflow-x: hidden; min-height: 100vh; }
+    #scroll-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(to right, #ff1a1a, #ffffff, #ff4d4d); z-index: 99999; width: 0%; transition: width 0.1s ease-out; box-shadow: 0 0 15px #ff1a1a; }
+    .mouse-spotlight { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 26, 26, 0.07), transparent 80%); }
+    #preloader { position: fixed; inset: 0; background: #000000; z-index: 100000; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease-out, visibility 0.8s; }
+    .loader-text { font-family: 'Cinzel Decorative', cursive; font-size: 3.5rem; background: linear-gradient(to right, #ff1a1a, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; filter: drop-shadow(0 0 15px rgba(255, 26, 26, 0.6)); }
+    .loader-line { width: 0; height: 2px; background: #ff1a1a; margin: 10px auto; animation: widthFull 1.5s ease-in-out forwards; box-shadow: 0 0 15px #ff1a1a; }
+    @keyframes widthFull { to { width: 100%; } }
+    .tech-card, .glass-card { background: rgba(5, 5, 5, 0.1); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border: 1px solid rgba(255, 26, 26, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.05); transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s; }
+    .tech-card:hover, .glass-card:hover { background: rgba(18, 5, 5, 0.25); border-color: rgba(255, 26, 26, 0.6); box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 26, 26, 0.3); transform: translateY(-8px) scale(1.01); }
+    .shimmer-badge { background: linear-gradient(90deg, rgba(255,26,26,0.2) 0%, rgba(255,255,255,0.4) 50%, rgba(255,26,26,0.2) 100%); background-size: 1000px 100%; animation: shimmer 3s infinite linear; }
+    .text-gradient-magic { background: linear-gradient(-45deg, #ff1a1a, #ffffff, #ff4d4d, #990000); background-size: 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientX 4s ease infinite; filter: drop-shadow(0 0 12px rgba(255, 26, 26, 0.4)); }
+    .scanlines { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3)); background-size: 100% 4px; pointer-events: none; }
+    .aurora-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25; animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1); z-index: -2; mix-blend-mode: screen; }
+    .reveal { opacity: 0; transform: translateY(50px) scale(0.95); filter: blur(8px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.active { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    .glow-btn, .magnetic-btn { position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  </style>
+</head>
+<body class="min-h-screen pb-20 relative overflow-x-hidden selection:bg-primary selection:text-white antialiased">
+
+  <div id="scroll-progress"></div>
+  <div class="mouse-spotlight"></div>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="text-center">
+      <div class="loader-text">Alliances</div>
+      <div class="loader-line"></div>
+    </div>
+  </div>
+
+  <!-- Background Layer -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000]">
+    <div class="absolute inset-0 z-10 scanlines opacity-40"></div>
+    <div class="aurora-blob bg-red-900 w-96 h-96 top-0 left-0 animate-blob"></div>
+    <div class="aurora-blob bg-rose-950 w-96 h-96 bottom-0 right-20 animate-blob" style="animation-delay: 3s"></div>
+  </div>
+
+  <div id="toast-container" class="fixed top-28 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+  <div class="relative z-20">
+    <!-- Navbar -->
+    <nav class="fixed top-6 left-0 right-0 z-50 px-4 md:px-0">
+      <div class="max-w-6xl mx-auto glass-card rounded-full px-8 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/10">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
+          <img src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image3.png" alt="Logo" class="w-11 h-11 object-contain">
+          <span class="text-2xl md:text-3xl font-black font-fantasy text-white uppercase tracking-wider">H4x<span class="text-gradient-magic">Store</span></span>
+        </div>
+        <div class="flex items-center gap-8">
+          <div class="hidden md:flex gap-4 lg:gap-6 text-sm font-bold font-fantasy text-gray-300 uppercase tracking-[0.2em] items-center">
+            <a href="index.html#products" class="hover:text-primary transition-colors">Products</a>
+            <a href="partners.html" class="text-primary transition-colors relative group py-1">
+              <span>Partners</span>
+              <span class="absolute bottom-0 left-0 w-full h-0.5 bg-primary shadow-[0_0_8px_#ff1a1a]"></span>
+            </a>
+            <a href="Affiliate.html" class="hover:text-primary transition-colors">Affiliate</a>
+            <a href="Youtube.html" class="hover:text-primary transition-colors">Videos</a>
+            <a href="Credits.html" class="hover:text-primary transition-colors">Credits</a>
+          </div>
+          <button id="sound-toggle" onclick="toggleSound()" class="p-3 text-zinc-400 hover:text-white bg-white/5 rounded-full border border-white/10"><i data-lucide="volume-2" id="sound-icon" class="w-5 h-5 text-primary"></i></button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto pt-44 px-4">
+      <div class="text-center mb-20 reveal active">
+        <h1 class="font-fantasy font-black text-5xl md:text-8xl uppercase tracking-tight mb-6 text-white">
+          Partner <span class="text-gradient-magic italic">Ships</span>
+        </h1>
+        <p class="font-serif italic text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
+          "Official H4xScripts Partners"
+        </p>
+      </div>
+
+      <!-- Partners Integration Grid Layout -->
+      <section class="pb-32">
+        <div id="partners-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+          <!-- Partners generated via JS configuration data strings -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let soundEnabled = false;
+    const uiAudioNode = new Audio("Chill Piano Electronic Music (For Videos) - Home by Neutrin05.mp3");
+    const easterEggAudioNode = new Audio("Nakano Itsuki Voice Simple [五等分の花嫁] - GTNH.mp3");
+
+    function playUiSound() {
+      if (!soundEnabled) return;
+      try {
+        if (uiAudioNode.paused) {
+          uiAudioNode.currentTime = 0; 
+          uiAudioNode.volume = 0.35;   
+          uiAudioNode.play().catch(e => console.warn("Audio playback blocked:", e));
+        }
+      } catch(e) {
+        console.warn("Audio thread block caught:", e);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      
+      if (soundEnabled) {
+        icon.setAttribute('data-lucide', 'volume-2');
+        
+        uiAudioNode.load();
+        easterEggAudioNode.load();
+        
+        setTimeout(() => playUiSound(), 50);
+      } else {
+        icon.setAttribute('data-lucide', 'volume-x');
+        
+        uiAudioNode.pause();
+        easterEggAudioNode.pause();
+      }
+      lucide.createIcons();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const characterElement = document.getElementById("anime-character");
+      if (characterElement) {
+        characterElement.addEventListener("click", (event) => {
+          event.stopPropagation(); 
+          if (!soundEnabled) return;
+          try {
+            easterEggAudioNode.currentTime = 0;
+            easterEggAudioNode.volume = 0.70; 
+            easterEggAudioNode.play().catch(e => console.warn("Easter egg playback blocked:", e));
+          } catch(err) {
+            console.error("Matrix Audio thread exception occurred:", err);
+          }
+        });
+      }
+    });
+
+    function loadPartners() {
+      let partners = [];
+      const samplePartners = [
+        { id: "1", name: "KernelCore Tech", description: "Elite ring-0 infrastructure architecture specializing in bypass design vectors and persistent custom spoofers.", logo: "https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png", link: "#", isVip: true },
+        { id: "2", name: "Vanguard Systems", description: "Polymorphic memory engines providing unmatched optimization metrics for premium software frameworks.", logo: "https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png", link: "#", isVip: false }
+      ];
+
+      // Prioritize fetching from the store-state system directly
+      const state = typeof loadStoreState === 'function' ? loadStoreState() : null;
+
+      if (state && state.partners && state.partners.length > 0) {
+          partners = state.partners;
+      } else if (localStorage.getItem('h4xstore_partners')) {
+          // Fallback to local storage if state isn't synced
+          partners = JSON.parse(localStorage.getItem('h4xstore_partners'));
+      } else {
+          partners = samplePartners;
+          localStorage.setItem('h4xstore_partners', JSON.stringify(samplePartners));
+      }
+
+      const grid = document.getElementById('partners-grid');
+
+      if (!partners || partners.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center text-zinc-500 font-serif italic text-xl">No active Partnerships..</div>`;
+        return;
+      }
+
+      grid.innerHTML = partners.map(p => {
+        // Highly resilient URL extraction logic to ensure valid targets
+        let linkTarget = p.link || '#';
+        if (linkTarget !== '#' && !linkTarget.startsWith('http://') && !linkTarget.startsWith('https://')) {
+            linkTarget = 'https://' + linkTarget;
+        }
+
+        const isDiscord = linkTarget.toLowerCase().includes('discord');
+        const ctaText = isDiscord ? 'Join Discord' : 'Visit Website';
+        
+        // Block empty links from pushing users back to the top of the webpage
+        const onClickHandler = linkTarget === '#' ? 'onclick="event.preventDefault();"' : '';
+        
+        return `
+          <div class="tech-card rounded-[2.5rem] p-8 flex flex-col relative group overflow-hidden border ${p.isVip ? 'border-primary/50 shadow-[0_0_30px_rgba(255,26,26,0.3)]' : 'border-white/10'}" onmouseenter="playUiSound()">
+            ${p.isVip ? '<div class="shimmer-badge absolute -top-0 right-8 text-white text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-4 py-1 rounded-b-xl border border-t-0 border-white/20 z-20"><i class="fa-solid fa-crown text-amber-400 mr-1"></i> VIP Partner</div>' : ''}
+            
+            <div class="flex items-center gap-5 mb-6 pb-4 border-b border-white/5">
+              <div class="w-16 h-16 rounded-2xl bg-black/40 border ${p.isVip ? 'border-primary/40' : 'border-white/10'} p-2 flex items-center justify-center shrink-0 relative z-20">
+                <img src="${p.logo || 'https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png'}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,26,26,0.4)]">
+              </div>
+              <div class="relative z-20">
+                <h3 class="text-2xl font-bold font-fantasy text-white uppercase tracking-wider group-hover:text-primary transition-colors">${p.name}</h3>
+                <span class="text-[10px] font-tech text-zinc-400 uppercase tracking-widest">Network Verified Vector</span>
+              </div>
+            </div>
+
+            <p class="text-zinc-400 font-sans text-sm leading-relaxed mb-8 flex-1 italic relative z-20">"${p.description}"</p>
+
+            <a href="${linkTarget}" target="_blank" ${onClickHandler} class="glow-btn relative z-[60] px-6 py-3.5 rounded-xl font-bold font-fantasy text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all ${p.isVip ? 'bg-gradient-to-r from-red-700 to-red-600 text-white border border-white/20 hover:from-primary hover:to-red-500 hover:border-primary' : 'bg-white/5 text-gray-300 border border-white/10 hover:bg-primary hover:text-white'}">
+              <span>${ctaText}</span> <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+      attachTiltEffects();
+    }
+
+    function attachTiltEffects() {
+      document.querySelectorAll('.tech-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width/2;
+          const y = e.clientY - rect.top - rect.height/2;
+          card.style.transform = `perspective(1000px) rotateX(${-(y/rect.height)*10}deg) rotateY(${(x/rect.width)*10}deg) translateY(-4px)`;
+        });
+        card.addEventListener('mouseleave', () => { card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)'; });
+      });
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const preloader = document.getElementById('preloader');
+        if (preloader) { preloader.style.opacity = '0'; setTimeout(() => preloader.style.visibility = 'hidden', 800); }
+        loadPartners(); // Force load on preloader finish
+      }, 600);
+    });
+
+    window.addEventListener('mousemove', e => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
+    
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      document.getElementById('scroll-progress').style.width = (winScroll / height) * 100 + '%';
+    });
+  </script>
+</body>
+</html>

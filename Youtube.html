@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H4xStore - Youtubes</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="store-state.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Lato"', '"Rajdhani"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            fantasy: ['"Cinzel Decorative"', 'serif'],
+            tech: ['"Rajdhani"', 'sans-serif'],
+          },
+          colors: {
+            primary: '#ff1a1a',
+            'fantasy-red': '#ff1a1a',
+            'fantasy-darkred': '#990000',
+            'fantasy-crimson': '#dc2626',
+            'deep-black': '#000000',
+            'midnight': '#080808',
+          },
+          animation: {
+            'float': 'float 8s ease-in-out infinite',
+            'float-slow': 'floatSlow 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 15s linear infinite',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'gradient-x': 'gradientX 5s ease infinite',
+            'blob': 'blob 7s infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+              '50%': { transform: 'translateY(-20px) rotate(1deg)' },
+            },
+            floatSlow: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-15px)' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-1000px 0' },
+              '100%': { backgroundPosition: '1000px 0' }
+            },
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(0.5)' },
+              '100%': { opacity: '1', transform: 'scale(1)' }
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(40px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            gradientX: {
+              '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+              '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+            },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --primary: #ff1a1a;
+      --bg-dark: #000000;
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+    }
+    body {
+      background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #140303 100%);
+      color: #E2E8F0;
+      font-family: 'Lato', 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(to right, #ff1a1a, #ffffff, #ff4d4d);
+      z-index: 99999;
+      width: 0%;
+      transition: width 0.1s ease-out;
+      box-shadow: 0 0 15px #ff1a1a;
+    }
+    .mouse-spotlight {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 26, 26, 0.07), transparent 80%);
+    }
+    #preloader {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      z-index: 100000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.8s ease-out, visibility 0.8s;
+    }
+    .loader-content { text-align: center; }
+    .loader-text {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 3.5rem;
+      background: linear-gradient(to right, #ff1a1a, #ffffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      opacity: 0;
+      animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      filter: drop-shadow(0 0 15px rgba(255, 26, 26, 0.6));
+    }
+    .loader-line {
+      width: 0;
+      height: 2px;
+      background: #ff1a1a;
+      margin: 10px auto;
+      animation: widthFull 1.5s ease-in-out forwards;
+      box-shadow: 0 0 15px #ff1a1a;
+    }
+    @keyframes widthFull { to { width: 100%; } }
+
+    .tech-card {
+      background: rgba(5, 5, 5, 0.1);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      border: 1px solid rgba(255, 26, 26, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.1); 
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.05);
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, background 0.4s, border-color 0.4s;
+    }
+    .tech-card:hover {
+      background: rgba(18, 5, 5, 0.25);
+      border-color: rgba(255, 26, 26, 0.6);
+      box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 26, 26, 0.3);
+      transform: translateY(-8px) scale(1.01);
+    }
+    .text-gradient-magic {
+      background: linear-gradient(-45deg, #ff1a1a, #ffffff, #ff4d4d, #990000);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientX 4s ease infinite;
+      filter: drop-shadow(0 0 12px rgba(255, 26, 26, 0.4));
+    }
+    @keyframes moveGrid {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(48px); }
+    }
+    @keyframes particle-drift {
+      0% { transform: translateY(100vh) translateX(0) scale(0) rotate(0deg); opacity: 0; }
+      20% { opacity: 0.6; transform: translateY(80vh) translateX(20px) scale(1) rotate(45deg); }
+      80% { opacity: 0.6; }
+      100% { transform: translateY(-20vh) translateX(-20px) scale(0.5) rotate(180deg); opacity: 0; }
+    }
+    .scanlines {
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3));
+      background-size: 100% 4px; pointer-events: none;
+    }
+    .particle {
+      position: absolute; background: var(--primary); border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); animation: particle-drift linear infinite;
+    }
+    .aurora-blob {
+      position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25;
+      animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1); z-index: -2; mix-blend-mode: screen; 
+    }
+    .reveal {
+      opacity: 0; transform: translateY(30px); filter: blur(4px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.active { opacity: 1; transform: translateY(0); filter: blur(0); }
+    .glow-btn { position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .glow-btn::after {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,26,26,0.4) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .glow-btn:hover::after { opacity: 1; }
+  </style>
+</head>
+<body class="min-h-screen pb-20 relative overflow-x-hidden antialiased">
+
+  <div id="scroll-progress"></div>
+  <div class="mouse-spotlight"></div>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-text">Videos</div>
+      <div class="loader-line"></div>
+    </div>
+  </div>
+
+  <!-- Shared Store Background Architecture -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000]">
+    <div class="absolute inset-0 z-10 scanlines opacity-40"></div>
+    <div class="absolute inset-[-100%] h-[300%] bg-[linear-gradient(to_right,#ff1a1a15_1px,transparent_1px),linear-gradient(to_bottom,#ff1a1a15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_80%,transparent_100%)] opacity-40" style="animation: moveGrid 3s linear infinite"></div>
+    
+    <div class="aurora-blob bg-red-900 w-96 h-96 top-0 left-0 animate-blob"></div>
+    <div class="aurora-blob bg-neutral-800 w-96 h-96 bottom-0 right-0 animate-blob" style="animation-delay: 3s"></div>
+    
+    <div class="particle w-1 h-1 left-[15%]" style="animation-duration: 14s; animation-delay: 0s;"></div>
+    <div class="particle w-2 h-2 left-[45%]" style="animation-duration: 18s; animation-delay: 2s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[75%]" style="animation-duration: 12s; animation-delay: 5s;"></div>
+  </div>
+
+  <div class="relative z-20 max-w-7xl mx-auto pt-12 px-4 md:px-8">
+    
+    <!-- Top Navigation Bar -->
+<nav class="mb-16 reveal">
+      <div class="tech-card rounded-full px-8 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/10">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.href='index.html'">
+          <span class="text-xl md:text-2xl font-black font-fantasy text-white uppercase tracking-wider">
+            H4x<span class="text-gradient-magic">Store</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="index.html" class="text-xs font-fantasy font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors">Return</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Title Header -->
+    <div class="text-center mb-16 reveal">
+
+      <h1 class="font-fantasy font-black text-4xl md:text-7xl uppercase tracking-wider text-white">
+        Youtube <span class="text-gradient-magic italic">Videos</span>
+      </h1>
+      <div class="w-32 h-1 bg-gradient-to-r from-primary via-white to-red-800 mx-auto rounded-full mt-4 shadow-[0_0_15px_#ff1a1a]"></div>
+    </div>
+
+    <!-- Fallback Message Box -->
+    <div id="no-video-message" class="hidden text-center py-20 tech-card rounded-[2.5rem] max-w-2xl mx-auto border-dashed border-red-500/20 reveal">
+      <i data-lucide="youtube" class="w-16 h-16 text-primary mx-auto mb-4 opacity-40 animate-pulse"></i>
+      <h3 class="text-xl font-fantasy font-bold text-white uppercase tracking-wider">No Videos Found</h3>
+      <p class="text-zinc-400 font-serif italic text-base mt-2">Youtube videos will appear here!.</p>
+    </div>
+
+    <!-- Media Streams Grid Layout -->
+    <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 xl:gap-10 reveal">
+    </div>
+  </div>
+
+  <!-- Translucent Video Player Modal Interface -->
+  <div id="video-modal" class="fixed inset-0 z-[80] bg-black/90 backdrop-blur-xl hidden opacity-0 transition-all duration-300 flex items-center justify-center p-4 md:p-10">
+    <button onclick="closeModal()" class="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-primary hover:bg-primary/20 transition-all z-50">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <div class="w-full max-w-5xl aspect-video rounded-[2.5rem] overflow-hidden border border-red-500/30 shadow-[0_0_50px_rgba(255,26,26,0.2)] relative transform scale-95 transition-all duration-300 bg-black" id="modal-content">
+      <div class="absolute inset-0 flex items-center justify-center z-0">
+        <i data-lucide="loader" class="w-10 h-10 text-primary animate-spin"></i>
+      </div>
+      <iframe id="modal-player" class="absolute inset-0 w-full h-full z-10" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    function openModal(youtubeId) {
+      const modal = document.getElementById('video-modal');
+      const player = document.getElementById('modal-player');
+      const content = document.getElementById('modal-content');
+      
+      player.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&origin=${window.location.origin}`;
+      modal.classList.remove('hidden');
+      
+      requestAnimationFrame(() => {
+        modal.classList.add('opacity-100');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+      });
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('video-modal');
+      const player = document.getElementById('modal-player');
+      const content = document.getElementById('modal-content');
+      
+      modal.classList.remove('opacity-100');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        player.src = '';
+      }, 300);
+    }
+
+    function renderVideoGrid(state) {
+      const grid = document.getElementById('video-grid');
+      const fallback = document.getElementById('no-video-message');
+      const status = document.getElementById('sync-status');
+      
+      const videos = state?.videos || [];
+
+      if (videos.length > 0) {
+        grid.innerHTML = videos.map(video => `
+          <div class="tech-card rounded-[2.5rem] overflow-hidden cursor-pointer group flex flex-col h-full" onclick="openModal('${video.youtubeId}')">
+            <div class="relative w-full pt-[56.25%] overflow-hidden bg-black border-b border-white/5">
+              <img src="https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg" alt="${video.title}" class="absolute top-0 left-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-105" />
+              <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors duration-300">
+                <div class="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_25px_rgba(255,26,26,0.6)] group-hover:scale-110 transition-transform duration-300 border border-white/20">
+                  <i data-lucide="play" class="w-6 h-6 text-white ml-1 fill-white"></i>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 flex-1 flex flex-col justify-between">
+              <h3 class="font-bold font-fantasy text-white text-lg tracking-wide leading-snug line-clamp-2 group-hover:text-primary transition-colors">${video.title}</h3>
+              <div class="mt-6 pt-4 border-t border-white/5 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 shadow-inner">
+                 <img src="image_0e721c.jpg" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjcyNzI3Ii8+PC9zdmc+'" alt="Avatar" class="w-full h-full object-cover opacity-80" />
+                </div>
+                <div class="flex-1 min-w-0 font-sans">
+                  <p class="text-xs font-black text-zinc-300 uppercase tracking-wider truncate">${video.publisher || 'H4xStore Channel'}</p>
+                  <p class="text-[10px] text-primary font-tech tracking-widest uppercase mt-0.5 font-bold">${video.date}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        
+        fallback.classList.add('hidden');
+        grid.classList.remove('hidden');
+    
+      } else {
+        grid.innerHTML = '';
+        grid.classList.add('hidden');
+        fallback.classList.remove('hidden');
+
+      }
+      
+      lucide.createIcons();
+      attachTiltEffects();
+    }
+
+    // Interactive Layout Animations
+    window.addEventListener('load', () => {
+      const preloader = document.getElementById('preloader');
+      setTimeout(() => {
+        if (preloader) {
+          preloader.style.opacity = '0';
+          preloader.style.visibility = 'hidden';
+        }
+        document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+      }, 600);
+    });
+
+    window.addEventListener('mousemove', e => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
+
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('scroll-progress').style.width = scrolled + '%';
+    });
+
+    function attachTiltEffects() {
+      document.querySelectorAll('.tech-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const rotateX = ((e.clientY - rect.top - (rect.height / 2)) / (rect.height / 2)) * -5;
+          const rotateY = ((e.clientX - rect.left - (rect.width / 2)) / (rect.width / 2)) * 5;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+        });
+      });
+    }
+
+    let activeState = typeof loadStoreState === 'function' ? loadStoreState() : { videos: [] };
+    renderVideoGrid(activeState);
+
+    if (typeof subscribeStoreUpdates === 'function') {
+      subscribeStoreUpdates((state) => renderVideoGrid(state));
+    } else {
+      setInterval(() => {
+        if (typeof loadStoreState === 'function') renderVideoGrid(loadStoreState());
+      }, 2000);
+    }
+    // --- ENSURE GLOBAL STATE SYNC ON LOAD ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (typeof loadStoreState === 'function') {
+                const state = loadStoreState();
+                if(typeof renderVideoGrid === 'function') {
+                    renderVideoGrid(state);
+                }
+            }
+        }, 100);
+    });
+  </script>
+</body>
+</html>

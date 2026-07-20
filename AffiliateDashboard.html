@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Dashboard - H4xStore</title>
+    <!-- AFFILIATE TRACKING SYNC -->
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        localStorage.setItem('h4x_affiliate_ref', ref);
+      }
+    })();
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = { 
+      theme: { 
+        extend: { 
+          fontFamily: { sans: ['"Lato"', 'sans-serif'], serif: ['"Playfair Display"', 'serif'], fantasy: ['"Cinzel Decorative"', 'serif'], tech: ['"Rajdhani"', 'sans-serif'], }, 
+          colors: { primary: '#ff1a1a', success: '#00ff88' }, 
+          animation: { 'gradient-x': 'gradientX 5s ease infinite', 'blob': 'blob 7s infinite', }, 
+          keyframes: { 
+            gradientX: { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' }, }, 
+            blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' }, } 
+          } 
+        } 
+      } 
+    }
+  </script>
+  <style>
+    body { background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #140303 100%); color: #E2E8F0; min-height: 100vh; overflow-x: hidden; }
+    .tech-card { background: rgba(5, 5, 5, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 26, 26, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.05); transition: transform 0.4s ease; }
+    .tech-card:hover { border-color: rgba(255, 26, 26, 0.6); box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 26, 26, 0.3); transform: translateY(-5px); }
+    .text-gradient-magic { background: linear-gradient(-45deg, #ff1a1a, #ffffff, #ff4d4d, #990000); background-size: 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientX 4s ease infinite; }
+    .glow-btn { position: relative; overflow: hidden; }
+    .glow-btn::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,26,26,0.4) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .glow-btn:hover::after { opacity: 1; }
+    .shimmer-badge { background: linear-gradient(90deg, rgba(255,26,26,0.2) 0%, rgba(255,255,255,0.4) 50%, rgba(255,26,26,0.2) 100%); background-size: 1000px 100%; animation: shimmer 3s infinite linear; }
+    @keyframes shimmer { 0% { backgroundPosition: '-1000px 0' } 100% { backgroundPosition: '1000px 0' } }
+    .aurora-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25; animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1); z-index: -2; mix-blend-mode: screen; }
+    .custom-input { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+    .custom-input:focus { border-color: #ff1a1a; box-shadow: 0 0 15px rgba(255,26,26,0.3); outline: none; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 26, 26, 0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff1a1a; }
+  </style>
+</head>
+<body class="selection:bg-primary selection:text-white">
+
+<script src="auth.js"></script>
+<script>
+  Auth.requireAuth('Login.html');
+  const user = Auth.getCurrentUser();
+  if (!user || !user.isAffiliate) {
+      window.location.href = 'Affiliate.html';
+  }
+</script>
+
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000]">
+    <div class="aurora-blob bg-red-900 w-96 h-96 top-0 right-0"></div>
+    <div class="aurora-blob bg-rose-950 w-96 h-96 bottom-0 left-20" style="animation-delay: 4s"></div>
+  </div>
+
+  <div id="toast-container" class="fixed top-28 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+<nav class="fixed top-6 left-0 right-0 z-50 px-4 md:px-0 transition-all duration-300">
+    <div class="max-w-6xl mx-auto tech-card rounded-full px-8 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+      <a href="index.html" class="flex items-center gap-3">
+        <span class="text-2xl font-black font-fantasy text-white uppercase tracking-wider drop-shadow-[0_0_10px_rgba(255,26,26,0.5)]">
+          H4x<span class="text-gradient-magic">Store</span>
+        </span>
+      </a>
+<div class="hidden md:flex gap-6 font-fantasy text-sm font-bold uppercase tracking-[0.2em] text-gray-300">
+  <a href="Dashboard.html" class="hover:text-primary transition-colors">Dashboard</a>
+  <a href="index.html#products" class="hover:text-primary transition-colors">Store</a>
+  <a href="Partners.html" class="hover:text-primary transition-colors">Partners</a>
+  <a href="AffiliateDashboard.html" id="nav-affiliate-tab" class="text-primary border-b-2 border-primary pb-1">Affiliate</a>
+  <a href="Profile.html" class="hover:text-primary transition-colors">Profile</a>
+</div>
+      <a href="#" id="logout-btn" class="p-2 text-zinc-400 hover:text-primary transition-all bg-white/5 rounded-full border border-white/10 hover:border-primary">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
+      </a>
+    </div>
+  </nav>
+
+  <main class="relative z-10 max-w-6xl mx-auto pt-36 px-4 pb-20 min-h-screen">
+    
+    <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+      <div>
+        <h1 class="font-fantasy font-black text-4xl md:text-5xl uppercase tracking-wider text-white drop-shadow-md">Affiliate <span class="text-gradient-magic">Dashboard</span></h1>
+        <p class="font-serif italic text-zinc-400 mt-2">"Monetize your influence. Track your conversions."</p>
+      </div>
+      <div class="shimmer-badge inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/40 text-primary font-sans text-xs font-black tracking-[0.2em] uppercase mt-4 md:mt-0 shadow-[0_0_15px_rgba(255,26,26,0.2)]">
+        <i data-lucide="trending-up" class="w-4 h-4"></i> Partner Active
+      </div>
+    </div>
+
+    <!-- Referral Link Display -->
+    <div class="tech-card rounded-3xl p-8 mb-10 border-primary/30 shadow-[0_0_30px_rgba(255,26,26,0.1)]">
+      <h3 class="font-fantasy font-bold text-xl text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i data-lucide="link" class="text-primary w-5 h-5"></i> Your Referral Link
+      </h3>
+      <p class="text-zinc-400 font-sans text-sm mb-4">Share this link. You earn a <span id="commission-rate" class="text-success font-bold">...</span> commission on every successful purchase made by users who sign up through your link.</p>
+      
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1">
+          <input type="text" id="referral-link" value="Loading Komerza Link..." readonly class="custom-input w-full rounded-xl py-4 pl-6 pr-4 text-white font-tech text-lg tracking-widest bg-black/80">
+        </div>
+        <button onclick="copyAffiliateLink()" class="glow-btn px-8 py-4 bg-gradient-to-r from-red-700 via-primary to-red-600 hover:from-primary hover:to-red-700 text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(255,26,26,0.4)] transition-all flex justify-center items-center gap-2 shrink-0">
+          <i data-lucide="copy" class="w-4 h-4"></i> Copy Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Komerza Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+      <div class="tech-card p-6 rounded-3xl flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-4">
+          <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Total Clicks</div>
+          <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-zinc-500"></i>
+        </div>
+        <div id="stat-clicks" class="text-4xl font-black font-tech text-white">0</div>
+      </div>
+      
+      <div class="tech-card p-6 rounded-3xl flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-4">
+          <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Referred Orders</div>
+          <i data-lucide="shopping-cart" class="w-5 h-5 text-zinc-500"></i>
+        </div>
+        <div id="stat-orders" class="text-4xl font-black font-tech text-white">0</div>
+      </div>
+      
+      <div class="tech-card p-6 rounded-3xl flex flex-col justify-between border-success/30 shadow-[0_0_20px_rgba(0,255,136,0.1)]">
+        <div class="flex justify-between items-start mb-4">
+          <div class="text-xs font-fantasy uppercase tracking-widest text-success">Total Earned</div>
+          <i data-lucide="wallet" class="w-5 h-5 text-success"></i>
+        </div>
+        <div id="stat-earned" class="text-4xl font-black font-tech text-success drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]">$0.00</div>
+      </div>
+
+      <div class="tech-card p-6 rounded-3xl flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-4">
+          <div class="text-xs font-fantasy uppercase tracking-widest text-zinc-400">Conversion Rate</div>
+          <i data-lucide="percent" class="w-5 h-5 text-zinc-500"></i>
+        </div>
+        <div id="stat-conversion" class="text-4xl font-black font-tech text-white">0%</div>
+      </div>
+    </div>
+
+    <!-- Content Split Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Conversions -->
+      <div class="lg:col-span-2 tech-card rounded-[2.5rem] p-8">
+        <h3 class="font-fantasy font-bold text-xl text-white uppercase tracking-wider mb-6 border-b border-white/10 pb-4">Recent Conversions</h3>
+        
+        <div id="conversions-list" class="space-y-4 font-sans">
+          <p class="text-zinc-500 italic font-serif">Pulling live Komerza metrics...</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Withdrawals & History -->
+      <div class="flex flex-col gap-8">
+          
+        <!-- Withdraw Widget -->
+        <div class="tech-card rounded-[2.5rem] p-8 h-fit">
+          <h3 class="font-fantasy font-bold text-xl text-white uppercase tracking-wider mb-2">Withdraw Funds</h3>
+          <p class="text-[10px] text-primary font-bold uppercase tracking-widest mb-6 flex items-center gap-2"><i data-lucide="info" class="w-3 h-3"></i> Crypto payouts only. Additional payout methods will be supported in a future update.</p>
+          
+          <p class="text-sm text-zinc-400 font-sans mb-6">Available Balance: <span id="current-balance" class="text-success font-bold">$0.00</span><br>Minimum withdrawal is <span class="text-primary font-bold">$10.00</span>.</p>
+          
+          <div class="space-y-4 mb-6">
+              <div class="flex gap-4">
+                  <div class="flex-1">
+                      <label class="block font-tech text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Currency</label>
+                      <select id="payout-currency" onchange="updateWalletPlaceholder()" class="custom-input w-full rounded-xl py-3 px-4 text-white font-sans text-sm appearance-none cursor-pointer">
+                          <option value="LTC">Litecoin (LTC)</option>
+                          <option value="BTC">Bitcoin (BTC)</option>
+                      </select>
+                  </div>
+                  <div class="flex-1">
+                      <label class="block font-tech text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Amount ($)</label>
+                      <input type="number" id="payout-amount" min="10" step="0.01" class="custom-input w-full rounded-xl py-3 px-4 text-white font-sans text-sm" placeholder="10.00">
+                  </div>
+              </div>
+
+            <div>
+              <label id="wallet-label" class="block font-tech text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">LTC Wallet Address</label>
+              <input type="text" id="payout-address" class="custom-input w-full rounded-xl py-3 px-4 text-white font-sans text-sm" placeholder="Lxxxx... / Mxxxx... / ltc1...">
+            </div>
+          </div>
+
+          <button id="payout-btn" onclick="requestPayout()" class="glow-btn w-full py-4 bg-white/10 hover:bg-success text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] border border-white/20 hover:border-success transition-all flex items-center justify-center gap-2">
+            <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Request Payout
+          </button>
+          
+          <p id="payout-processing-note" class="hidden text-xs text-amber-500 font-sans mt-4 text-center">
+            This withdrawal is currently being processed. Payouts may take a couple of days to complete.
+          </p>
+        </div>
+
+        <!-- Payout Ledger -->
+        <div class="tech-card rounded-[2.5rem] p-8 h-fit">
+          <h3 class="font-fantasy font-bold text-xl text-white uppercase tracking-wider mb-6 border-b border-white/10 pb-4">Payouts</h3>
+          <div id="payout-history-list" class="space-y-4 font-sans max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-zinc-500 italic font-serif text-sm">Loading history...</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="store-state.js"></script>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      Auth.logout();
+      window.location.href = 'Login.html';
+    });
+
+    let currentAffiliateCustomerId = null;
+    let currentAffiliateBalance = 0;
+
+    function addToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const borderColor = type === 'success' ? 'border-[#00ff88]/60' : 'border-primary/60';
+      const shadowColor = type === 'success' ? 'shadow-[0_0_30px_rgba(0,255,136,0.4)]' : 'shadow-[0_0_30px_rgba(255,26,26,0.4)]';
+      const iconColor = type === 'success' ? 'text-[#00ff88]' : 'text-primary';
+      const iconType = type === 'success' ? 'check' : 'alert-circle';
+      const bgColor = type === 'success' ? 'bg-[#00ff88]/20 border-[#00ff88]' : 'bg-primary/20 border-primary';
+
+      toast.className = `flex items-center gap-3 px-6 py-4 bg-[#080808]/95 backdrop-blur-xl border ${borderColor} rounded-2xl ${shadowColor} text-white translate-x-[120%] transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) font-sans font-bold text-base`;
+      toast.innerHTML = `<div class="w-7 h-7 rounded-full ${bgColor} border flex items-center justify-center shrink-0"><i data-lucide="${iconType}" class="${iconColor} w-4 h-4"></i></div> <span>${message}</span>`;
+      
+      toastContainer.appendChild(toast);
+      lucide.createIcons();
+      requestAnimationFrame(() => toast.classList.remove('translate-x-[120%]'));
+      setTimeout(() => {
+        toast.classList.add('translate-x-[120%]');
+        setTimeout(() => toast.remove(), 500);
+      }, 4000);
+    }
+
+    function copyAffiliateLink() {
+      const copyText = document.getElementById("referral-link");
+      copyText.select();
+      copyText.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(copyText.value);
+      addToast('Referral link copied to clipboard!', 'success');
+    }
+
+    function updateWalletPlaceholder() {
+        const currency = document.getElementById('payout-currency').value;
+        const label = document.getElementById('wallet-label');
+        const input = document.getElementById('payout-address');
+        if (currency === 'BTC') {
+            label.textContent = 'BTC Wallet Address';
+            input.placeholder = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+        } else {
+            label.textContent = 'LTC Wallet Address';
+            input.placeholder = 'Lxxxx... / Mxxxx... / ltc1...';
+        }
+    }
+
+    /* 
+     * STREAMING_CHUNK: Validating crypto addresses and submitting to Mock DB for Processing
+     */
+    async function requestPayout() {
+        const currency = document.getElementById('payout-currency').value;
+        const amount = parseFloat(document.getElementById('payout-amount').value);
+        const address = document.getElementById('payout-address').value.trim();
+
+        if (!currentAffiliateCustomerId) return addToast('Affiliate account not fully initialized.', 'error');
+        if (isNaN(amount) || amount < 10) return addToast('Minimum withdrawal amount is $10.00', 'error');
+        if (amount > currentAffiliateBalance) return addToast(`Insufficient balance. You only have $${currentAffiliateBalance.toFixed(2)}`, 'error');
+        if (!address) return addToast('Please enter a valid wallet address.', 'error');
+
+        // Extremely Strict Regex Validation protecting the store owner from sending to void
+        const btcRegex = /^(1[a-km-zA-HJ-NP-Z1-9]{25,34})|(3[a-km-zA-HJ-NP-Z1-9]{33})|(bc1[a-z0-9]{39,59})$/i;
+        const ltcRegex = /^(L|M|3)[A-Za-z0-9]{33}$|^ltc1[a-z0-9]{39}$/i;
+
+        if (currency === 'BTC' && !btcRegex.test(address)) return addToast('Invalid BTC Address format.', 'error');
+        if (currency === 'LTC' && !ltcRegex.test(address)) return addToast('Invalid LTC Address format.', 'error');
+
+        const state = typeof loadStoreState === 'function' ? loadStoreState() : { withdrawals: [] };
+        if (!state.withdrawals) state.withdrawals = [];
+        
+        const hasPending = state.withdrawals.some(w => w.customerId === currentAffiliateCustomerId && w.status === 'Processing');
+        if (hasPending) {
+            return addToast('You already have a pending withdrawal request in processing.', 'error');
+        }
+
+        // Create Secure Database Record
+        const reqObj = {
+            id: 'WD-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            customerId: currentAffiliateCustomerId,
+            username: user.username,
+            email: user.email,
+            discordLinked: user.discordLinked,
+            amount: amount,
+            currency: currency,
+            address: address,
+            dateRequested: new Date().toISOString(),
+            dateCompleted: null,
+            status: 'Processing'
+        };
+        
+        state.withdrawals.push(reqObj);
+        saveStoreState(state);
+        
+        addToast('Withdrawal requested successfully. Status: Processing.', 'success');
+        document.getElementById('payout-amount').value = '';
+        document.getElementById('payout-address').value = '';
+        
+        syncKomerzaAffiliate(); // Refresh UI State
+    }
+
+    /* 
+     * STREAMING_CHUNK: Pulling active payout history and rendering ledger safely
+     */
+    function loadPayoutHistory(customerId) {
+        const state = typeof loadStoreState === 'function' ? loadStoreState() : null;
+        if (!state) return;
+        
+        const list = document.getElementById('payout-history-list');
+        const myReqs = (state.withdrawals || []).filter(w => w.customerId === customerId);
+        
+        // Sort newest first
+        myReqs.sort((a,b) => new Date(b.dateRequested).getTime() - new Date(a.dateRequested).getTime());
+        
+        if (myReqs.length > 0) {
+            list.innerHTML = myReqs.map(r => {
+                const reqDate = new Date(r.dateRequested).toLocaleDateString();
+                const compDate = r.dateCompleted ? new Date(r.dateCompleted).toLocaleDateString() : 'N/A';
+                
+                let statusBadge = '';
+                if(r.status === 'Processing') statusBadge = '<span class="text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">Processing</span>';
+                else if(r.status === 'Completed') statusBadge = '<span class="text-success bg-[#00ff88]/10 border border-[#00ff88]/20 px-2 py-0.5 rounded">Completed</span>';
+                else statusBadge = '<span class="text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Rejected</span>';
+                
+                return `
+                    <div class="bg-black/40 p-4 rounded-xl border border-white/5 text-sm flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-white tracking-widest font-tech text-lg uppercase">$${r.amount.toFixed(2)}</span>
+                            <span class="text-[9px] uppercase font-bold tracking-widest">${statusBadge}</span>
+                        </div>
+                        <div class="text-[10px] text-zinc-400 uppercase tracking-widest font-mono truncate bg-black/60 p-2 rounded border border-white/5" title="${r.address}">
+                          ${r.currency}: ${r.address}
+                        </div>
+                        <div class="flex justify-between mt-2 text-[9px] text-zinc-500 font-tech uppercase tracking-widest">
+                            <span>Req: ${reqDate}</span>
+                            <span>ID: ${r.id}</span>
+                        </div>
+                        ${r.status !== 'Processing' ? `<div class="text-right text-[9px] text-zinc-600 mt-1">Processed: ${compDate}</div>` : ''}
+                        ${r.voidReason ? `<div class="text-right text-[9px] text-primary mt-1 truncate" title="${r.voidReason}">Reason: ${r.voidReason}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            list.innerHTML = `
+              <div class="text-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
+                <i data-lucide="history" class="w-8 h-8 text-zinc-600 mx-auto mb-3"></i>
+                <p class="text-zinc-600 text-xs uppercase tracking-widest font-tech font-bold">No withdrawals recorded</p>
+              </div>
+            `;
+        }
+        lucide.createIcons();
+    }
+
+    async function syncKomerzaAffiliate() {
+        if(!user || !user.email) {
+            document.getElementById('conversions-list').innerHTML = `
+                <div class="p-8 text-center border border-dashed border-primary/30 rounded-2xl bg-primary/5">
+                    <i data-lucide="alert-triangle" class="w-8 h-8 text-primary mx-auto mb-3"></i>
+                    <p class="text-primary text-sm font-sans">Account Error: Email not found.</p>
+                    <p class="text-[10px] text-primary/70 uppercase tracking-widest mt-1">Please ensure an email is tied to this account.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        try {
+            const STORE_ID = await window.getKomerzaStoreId();
+            if (!STORE_ID) throw new Error("Could not authenticate API Key and find Store ID");
+
+            const response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates?email=${encodeURIComponent(user.email)}`, {
+                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
+            });
+
+            if (!response.ok) throw new Error('Affiliate API Sync failed');
+            const data = await response.json();
+            
+            // Strictly match user email to isolate statistics uniquely per affiliate.
+            const aff = (data.data || []).find(a => a.emailAddress.toLowerCase() === user.email.toLowerCase());
+            
+            if (aff) {
+                currentAffiliateCustomerId = aff.customerId;
+                currentAffiliateBalance = aff.balance || 0;
+                
+                // --- WITHDRAWAL PENDING UI CHECK ---
+                const state = typeof loadStoreState === 'function' ? loadStoreState() : { withdrawals: [] };
+                if (!state.withdrawals) state.withdrawals = [];
+                const hasPending = state.withdrawals.some(w => w.customerId === currentAffiliateCustomerId && w.status === 'Processing');
+                
+                const wBtn = document.getElementById('payout-btn');
+                const wNote = document.getElementById('payout-processing-note');
+                
+                if (hasPending) {
+                    wBtn.disabled = true;
+                    wBtn.className = "w-full py-4 bg-zinc-800/50 text-zinc-500 rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] border border-white/5 cursor-not-allowed transition-all";
+                    wBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin inline-block mr-2"></i> Processing Request...`;
+                    wNote.classList.remove('hidden');
+                } else {
+                    wBtn.disabled = false;
+                    wBtn.className = "glow-btn w-full py-4 bg-white/10 hover:bg-success text-white rounded-xl font-bold font-fantasy text-sm uppercase tracking-[0.2em] border border-white/20 hover:border-success transition-all flex items-center justify-center gap-2";
+                    wBtn.innerHTML = `<i data-lucide="arrow-right-left" class="w-4 h-4"></i> Request Payout`;
+                    wNote.classList.add('hidden');
+                }
+                
+                document.getElementById('commission-rate').textContent = `${aff.returnPercentage !== null ? aff.returnPercentage : 15}%`;
+                
+                // This ensures old testing accounts that had the bad "https://.../?ref=" string saved locally are instantly sanitized
+                let trackingCode = aff.link || user.username;
+                let needsHealing = false;
+                
+                if (trackingCode.includes('?ref=')) {
+                    trackingCode = trackingCode.split('?ref=')[1];
+                    needsHealing = true;
+                } else if (trackingCode.includes('http')) {
+                    trackingCode = user.username;
+                    needsHealing = true;
+                }
+                
+                // Construct and display the perfect Native Komerza link to bypass custom checkout limits
+                document.getElementById('referral-link').value = `https://h4xstore.mykomerza.com?ref=${encodeURIComponent(trackingCode)}`;
+                
+                // Execute background patch directly on Komerza API if the user's DB entry was contaminated
+                if (needsHealing && aff.customerId) {
+                    fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/${aff.customerId}`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
+                            'Content-Type': 'application/json' 
+                        },
+                        body: JSON.stringify({
+                            link: trackingCode,
+                            isEnabled: aff.isEnabled,
+                            returnPercentage: aff.returnPercentage,
+                            percentageOff: aff.percentageOff,
+                            balance: aff.balance
+                        })
+                    }).catch(err => console.warn("Failed to auto-heal affiliate link", err));
+                }
+
+                // Inject accurate Dashboard metrics natively
+                document.getElementById('stat-orders').textContent = aff.referredOrders || 0;
+                document.getElementById('stat-earned').textContent = `$${(aff.allTimeEarned || 0).toFixed(2)}`;
+                document.getElementById('stat-conversion').textContent = `${((aff.conversionRate || 0) * 100).toFixed(1)}%`;
+                document.getElementById('current-balance').textContent = `$${(aff.balance || 0).toFixed(2)}`;
+                
+                let clicks = 0;
+                if (aff.conversionRate > 0 && aff.referredOrders > 0) {
+                    clicks = Math.round(aff.referredOrders / aff.conversionRate);
+                }
+                document.getElementById('stat-clicks').textContent = clicks;
+
+                // Load History API safely from local database cache
+                loadPayoutHistory(aff.customerId);
+
+                try {
+                    const ordersRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/${aff.customerId}/orders/1?limit=10`, {
+                        headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
+                    });
+                    
+                    if (ordersRes.ok) {
+                        const ordersData = await ordersRes.json();
+                        const ordersList = document.getElementById('conversions-list');
+                        
+                        if (ordersData.data && ordersData.data.length > 0) {
+                            ordersList.innerHTML = ordersData.data.map(order => {
+                                const date = new Date(order.dateCreated).toLocaleDateString();
+                                const amount = order.amountPaid || order.amount || 0;
+                                const commissionRate = aff.returnPercentage !== null ? (aff.returnPercentage / 100) : 0.15;
+                                const earned = amount * commissionRate;
+                                
+                                return `
+                                  <div class="bg-black/40 p-4 rounded-xl border border-white/5 flex justify-between items-center transition-all hover:border-primary/30 shadow-inner">
+                                    <div class="flex items-center gap-3">
+                                      <div class="w-10 h-10 rounded-full bg-success/10 border border-success/30 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-4 h-4 text-success drop-shadow-[0_0_5px_rgba(0,255,136,0.8)]"></i>
+                                      </div>
+                                      <div>
+                                        <div class="font-bold text-white text-sm uppercase tracking-wider">Order #${order.id.split('-')[0].toUpperCase()}</div>
+                                        <div class="text-[10px] text-zinc-500 mt-1 font-tech uppercase tracking-widest">${date} &bull; <span class="text-success">${order.status}</span></div>
+                                      </div>
+                                    </div>
+                                    <div class="text-right">
+                                      <div class="text-success font-bold font-tech text-lg drop-shadow-[0_0_8px_rgba(0,255,136,0.3)]">+$${earned.toFixed(2)}</div>
+                                      <div class="text-[9px] text-zinc-600 uppercase tracking-[0.2em] mt-1">Sale: $${amount.toFixed(2)}</div>
+                                    </div>
+                                  </div>
+                                `;
+                            }).join('');
+                            lucide.createIcons();
+                        } else {
+                            // Render Zero-Data State
+                            ordersList.innerHTML = `
+                                <div class="p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
+                                    <i data-lucide="ghost" class="w-8 h-8 text-zinc-600 mx-auto mb-3"></i>
+                                    <p class="text-zinc-500 text-sm font-sans">No conversions yet.</p>
+                                    <p class="text-[10px] text-zinc-600 uppercase tracking-widest mt-1">Share your link to start earning!</p>
+                                </div>
+                            `;
+                            lucide.createIcons();
+                        }
+                    }
+                } catch(orderErr) {
+                    console.error("Orders fetch failed:", orderErr);
+                    document.getElementById('conversions-list').innerHTML = `<p class="text-zinc-500 italic font-serif">Unable to load recent orders.</p>`;
+                }
+                
+            } else {
+                currentAffiliateCustomerId = null;
+                document.getElementById('commission-rate').textContent = `15%`;
+                document.getElementById('referral-link').value = `https://h4xstore.mykomerza.com?ref=${encodeURIComponent(user.username)}`;
+                document.getElementById('stat-orders').textContent = "0";
+                document.getElementById('stat-earned').textContent = "$0.00";
+                document.getElementById('stat-conversion').textContent = "0%";
+                document.getElementById('current-balance').textContent = "$0.00";
+                document.getElementById('stat-clicks').textContent = "0";
+                
+                document.getElementById('conversions-list').innerHTML = `
+                    <div class="p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
+                        <i data-lucide="clock" class="w-8 h-8 text-zinc-600 mx-auto mb-3"></i>
+                        <p class="text-zinc-500 text-sm font-sans">Zero traffic recorded.</p>
+                        <p class="text-[10px] text-zinc-600 uppercase tracking-widest mt-1">Share your link to generate analytics.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+
+        } catch (error) {
+            console.error("Affiliate Sync Failed:", error);
+            document.getElementById('conversions-list').innerHTML = `
+                <div class="p-4 bg-primary/10 border border-primary/30 rounded-xl">
+                    <p class="text-primary text-sm font-sans">Failed to connect to Komerza backend.</p>
+                    <p class="text-[10px] text-primary/70 uppercase tracking-widest mt-1">Retrying soon...</p>
+                </div>
+            `;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      syncKomerzaAffiliate();
+    });
+  </script>
+</body>
+</html>

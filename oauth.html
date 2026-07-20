@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authenticating...</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { background: #0a0a0a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="text-center">
+    <i data-lucide="loader-2" class="w-12 h-12 animate-spin text-[#ff1a1a] mx-auto mb-4"></i>
+    <h2 class="text-xl font-bold tracking-widest uppercase">Verifying Discord Connection...</h2>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    lucide.createIcons();
+
+    window.onload = () => {
+      // 1. Grab the token from Discord's redirect URL
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const [accessToken, tokenType] = [fragment.get('access_token'), fragment.get('token_type')];
+
+      if (!accessToken) {
+        alert("Authentication failed or cancelled.");
+        window.location.href = 'Login.html';
+        return;
+      }
+// 2. Fetch the user's real data securely from Discord's API
+      fetch('https://discord.com/api/users/@me', {
+        headers: { authorization: `${tokenType} ${accessToken}` }
+      })
+      .then(result => result.json())
+      .then(response => {
+        // 3. Send their real data to your auth.js database
+        const result = Auth.handleDiscordUser(response);
+        
+        // 4. SMART ROUTING: Check Admin FIRST!
+        const user = result.user;
+        if (user.role === 'admin') {
+          window.location.href = 'H4xShopAdmin.html';
+        } else if (user.ownsKey) {
+          window.location.href = 'Dashboard.html';
+        } else if (user.isAffiliate) {
+          window.location.href = 'AffiliateDashboard.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      })
+      .catch(console.error);
+    };
+  </script>
+</body>
+</html>

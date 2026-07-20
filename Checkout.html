@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <script src="auth.js"></script>
+  <script src="store-state.js"></script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Checkout</title>
+  
+  <!-- PATCHED CSP: Allows API Calls directly to Komerza backend securely -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- KOMERZA EMBED SDK -->
+  <script src="https://checkout.komerza.com/embed/embed.iife.js" defer></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Lato"', '"Rajdhani"', 'sans-serif'], fantasy: ['"Cinzel Decorative"', 'serif'], tech: ['"Rajdhani"', 'sans-serif'], },
+          colors: { primary: '#ff1a1a', 'deep-black': '#000000', 'midnight': '#080808', },
+          animation: { 'float-slow': 'floatSlow 6s ease-in-out infinite', 'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards', 'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', 'blob': 'blob 7s infinite', },
+          keyframes: { floatSlow: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-15px)' }, }, popIn: { '0%': { opacity: '0', transform: 'scale(0.5)' }, '100%': { opacity: '1', transform: 'scale(1)' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(40px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' }, } }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { --primary: #ff1a1a; --mouse-x: 50%; --mouse-y: 50%; }
+    body { background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #140303 100%); color: #E2E8F0; font-family: 'Lato', 'Rajdhani', sans-serif; overflow-x: hidden; min-height: 100vh; }
+    ::selection { background-color: var(--primary); color: white; }
+    .mouse-spotlight { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 26, 26, 0.07), transparent 80%); }
+    #preloader { position: fixed; inset: 0; background: #000000; z-index: 100000; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease-out, visibility 0.8s; }
+    .loader-content { text-align: center; }
+    .loader-text { font-family: 'Cinzel Decorative', cursive; font-size: 3.5rem; background: linear-gradient(to right, #ff1a1a, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; filter: drop-shadow(0 0 15px rgba(255, 26, 26, 0.6)); }
+    .loader-line { width: 0; height: 2px; background: #ff1a1a; margin: 10px auto; animation: widthFull 1.5s ease-in-out forwards; box-shadow: 0 0 15px #ff1a1a; }
+    @keyframes widthFull { to { width: 100%; } }
+    .tech-card { background: rgba(5, 5, 5, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 26, 26, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 26, 26, 0.05); transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, background 0.4s, border-color 0.4s; }
+    .tech-card:hover { background: rgba(18, 5, 5, 0.25); border-color: rgba(255, 26, 26, 0.5); box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 26, 26, 0.2); }
+    .input-field { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; backdrop-filter: blur(4px); }
+    .input-field:focus { border-color: #ff1a1a; box-shadow: inset 0 0 15px rgba(255, 26, 26, 0.3); outline: none; }
+    .glow-btn { position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .glow-btn::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,26,26,0.4) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .glow-btn:hover::after { opacity: 1; }
+    .aurora-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25; animation: blob 10s infinite cubic-bezier(0.2, 0.8, 0.2, 1); z-index: -2; mix-blend-mode: screen; }
+  </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-primary selection:text-white antialiased">
+
+  <div class="mouse-spotlight"></div>
+
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-text">Loading</div>
+      <div class="loader-line"></div>
+    </div>
+  </div>
+
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#000000]">
+    <div class="aurora-blob bg-red-900 w-96 h-96 top-0 left-0 animate-blob"></div>
+    <div class="aurora-blob bg-neutral-800 w-96 h-96 top-0 right-0 animate-blob" style="animation-delay: 2s"></div>
+    <div class="aurora-blob bg-rose-950 w-96 h-96 bottom-0 left-20 animate-blob" style="animation-delay: 4s"></div>
+    <div class="aurora-blob bg-red-800 w-96 h-96 bottom-40 right-40 animate-blob" style="animation-delay: 6s"></div>
+  </div>
+<!-- Anime Character Mascot -->
+  <img id="anime-character" src="https://raw.githubusercontent.com/Celeste-Hub-Script/websiteimages/main/image.png" alt="Anime Mascot" class="fixed bottom-0 left-0 md:left-8 lg:left-16 w-48 md:w-64 lg:w-[400px] z-10 drop-shadow-[0_0_35px_rgba(255,26,26,0.5)] opacity-80 hover:opacity-100 hover:scale-105 transition-all duration-500 cursor-pointer animate-float-slow">
+  <main class="relative z-20 flex items-center justify-center min-h-screen p-4 py-20">
+    <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Billing -->
+      <div class="lg:col-span-2 tech-card rounded-[2.5rem] p-8 md:p-10 relative group">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold font-fantasy text-white uppercase tracking-wider">Billing</h2>
+          <a href="index.html" class="text-zinc-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold tracking-widest uppercase">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Return
+          </a>
+        </div>
+        
+        <form class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Email Address</label>
+              <input type="email" id="user-email" placeholder="user@gmail.com" class="input-field w-full rounded-xl px-4 py-3 text-white text-lg font-tech" required>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Discord ID (Optional)</label>
+              <input type="text" placeholder="Username" class="input-field w-full rounded-xl px-4 py-3 text-white text-lg font-tech">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-4 mt-8">Payment Transaction</label>
+            <div class="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
+              <div class="flex gap-4">
+                <i data-lucide="bitcoin" class="w-8 h-8 text-zinc-400"></i>
+                <i data-lucide="credit-card" class="w-8 h-8 text-zinc-400"></i>
+                <i data-lucide="smartphone" class="w-8 h-8 text-zinc-400"></i>
+              </div>
+              <p class="text-sm font-sans text-zinc-400 text-center md:text-left">All transactions, including Crypto and Cards, are securely processed via the Komerza Gateway window on the next step.</p>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Column: Summary -->
+      <div class="tech-card rounded-[2.5rem] p-8 md:p-10 h-fit relative flex flex-col justify-between">
+        <div>
+          <h3 class="text-2xl font-bold font-fantasy text-white uppercase tracking-wider mb-6">Summary</h3>
+          
+          <div id="checkout-items" class="space-y-4 mb-6 pb-6 border-b border-white/10"></div>
+
+          <div class="flex gap-3 mb-6 pb-6 border-b border-white/10">
+            <input type="text" id="checkout-promo-input" placeholder="Coupon Code" class="input-field w-full rounded-xl px-4 py-3 text-white text-sm font-tech uppercase tracking-widest placeholder:text-zinc-600">
+            <button id="checkout-apply-promo" class="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold font-sans text-xs uppercase tracking-widest transition-all border border-white/10 hover:border-primary">Apply</button>
+          </div>
+
+          <div class="space-y-3 mb-8 font-sans">
+            <div class="flex justify-between text-zinc-400 text-lg font-semibold">
+              <span>Subtotal</span><span id="checkout-subtotal" class="text-white font-bold">$0.00</span>
+            </div>
+            
+            <div id="checkout-discount-row" class="hidden flex justify-between"></div>
+
+            <div class="flex justify-between text-2xl font-bold text-white pt-4 border-t border-white/10">
+              <span class="font-fantasy">Total</span><span id="checkout-total" class="text-primary font-tech drop-shadow-[0_0_10px_rgba(255,26,26,0.6)]">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <button id="confirm-btn" class="glow-btn w-full py-4 flex items-center justify-center gap-3 bg-gradient-to-r from-red-700 via-primary to-red-600 hover:from-primary hover:to-red-700 text-white rounded-xl font-bold font-fantasy text-lg uppercase tracking-[0.2em] shadow-[0_0_25px_rgba(255,26,26,0.4)] hover:shadow-[0_0_35px_rgba(255,26,26,0.7)] transition-all border border-white/20">
+            Checkout
+          </button>
+          
+          <!-- FALLBACK REDIRECT (Appears if modal fails) -->
+          <div id="fallback-container" class="hidden mt-6 text-center animate-pop-in">
+            <p class="text-xs text-zinc-400 font-sans mb-2">Modal blocked by browser?</p>
+            <button id="fallback-btn" class="text-primary hover:text-white text-xs font-bold uppercase tracking-widest underline underline-offset-4 transition-colors">
+              Click here to pay directly
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener('mousemove', e => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
+
+    window.addEventListener('load', () => {
+      const preloader = document.getElementById('preloader');
+      setTimeout(() => {
+        if (preloader) {
+          preloader.style.opacity = '0';
+          setTimeout(() => preloader.style.visibility = 'hidden', 800);
+        }
+      }, 500);
+    });
+
+    lucide.createIcons();
+
+    let checkoutCart = [];
+    let appliedCoupon = localStorage.getItem('h4xstore_checkout_coupon') || "";
+
+    try {
+      const savedCart = localStorage.getItem('h4xstore_checkout_cart');
+      if (savedCart) checkoutCart = JSON.parse(savedCart);
+    } catch(e) {}
+
+    // Fallback if empty
+    if (checkoutCart.length === 0) {
+      checkoutCart = [{ name: 'Lifetime Key', price: 15.00, quantity: 1, id: '1' }];
+    }
+
+    function renderCheckout() {
+      const itemsContainer = document.getElementById('checkout-items');
+      let subtotal = 0;
+      
+      itemsContainer.innerHTML = checkoutCart.map(item => {
+        const itemTotal = item.price * (item.quantity || 1);
+        subtotal += itemTotal;
+        return `
+          <div class="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+            <div>
+              <p class="font-bold font-fantasy text-white text-base">${item.name}</p>
+              <p class="text-xs text-zinc-500 uppercase tracking-widest font-sans">Qty: ${item.quantity || 1}</p>
+            </div>
+            <p class="font-bold font-tech text-primary text-xl drop-shadow-[0_0_8px_rgba(255,26,26,0.6)]">$${itemTotal.toFixed(2)}</p>
+          </div>
+        `;
+      }).join('');
+
+      // ONLY BASE PRICES SHOW HERE
+      document.getElementById('checkout-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('checkout-total').textContent = `$${subtotal.toFixed(2)}`;
+
+      const discountRow = document.getElementById('checkout-discount-row');
+      if (appliedCoupon) {
+        discountRow.classList.remove('hidden');
+        discountRow.innerHTML = `<span class="text-[#00ff88] text-sm font-bold tracking-wider">Promo Code Active!</span><span class="text-[#00ff88] text-sm font-bold">Applied at Checkout</span>`;
+      } else {
+        discountRow.classList.add('hidden');
+      }
+    }
+
+    renderCheckout();
+
+    if (appliedCoupon) {
+      document.getElementById('checkout-promo-input').value = appliedCoupon;
+      const btn = document.getElementById('checkout-apply-promo');
+      btn.innerHTML = 'Saved';
+      btn.classList.add('border-[#00ff88]', 'text-[#00ff88]');
+    }
+
+    document.getElementById('checkout-apply-promo').addEventListener('click', (e) => {
+        e.preventDefault();
+        appliedCoupon = document.getElementById('checkout-promo-input').value.trim().toUpperCase();
+        
+        if(appliedCoupon) {
+            localStorage.setItem('h4xstore_checkout_coupon', appliedCoupon);
+            const btn = document.getElementById('checkout-apply-promo');
+            btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-[#00ff88]"></i>';
+            btn.classList.add('border-[#00ff88]', 'text-[#00ff88]');
+            lucide.createIcons();
+            
+            renderCheckout();
+            
+            setTimeout(() => {
+                btn.innerHTML = 'Saved';
+                btn.classList.remove('border-[#00ff88]', 'text-[#00ff88]');
+            }, 2000);
+        } else {
+            localStorage.removeItem('h4xstore_checkout_coupon');
+            renderCheckout();
+        }
+    });
+
+    // ==========================================
+    // INDESTRUCTIBLE KOMERZA INTEGRATION MAP
+    // ==========================================
+    function resolveKomerzaIDs(item) {
+        if (item.komerzaProductId && item.komerzaVariantId) {
+            return { p: item.komerzaProductId, v: item.komerzaVariantId };
+        }
+
+        const KOMERZA_ID_MAP = {
+            '1': { p: '7e42da01-fca5-452d-a8c5-f1219848d263', v: '27bc2f01-7182-4795-9b52-31ba2c8f53c8' }, 
+            '2': { p: 'b7fc1576-e839-4a2b-ac15-6d8f0fcd371b', v: '00f38464-5e96-4ea4-bf98-7d45bed41499' }, 
+            '3': { p: 'd2a31058-8aa0-4c53-968f-15132be5483e', v: 'cacbc2d2-0700-4059-8732-5ddce3d182e7' }  
+        };
+        if (item.id && KOMERZA_ID_MAP[String(item.id)]) {
+            return KOMERZA_ID_MAP[String(item.id)];
+        }
+
+        const itemName = (item.name || "").toLowerCase();
+        if (itemName.includes('lifetime') || itemName.includes('vip')) {
+            return { p: '7e42da01-fca5-452d-a8c5-f1219848d263', v: '27bc2f01-7182-4795-9b52-31ba2c8f53c8' };
+        } else if (itemName.includes('month') || itemName.includes('30')) {
+            return { p: 'b7fc1576-e839-4a2b-ac15-6d8f0fcd371b', v: '00f38464-5e96-4ea4-bf98-7d45bed41499' };
+        } else if (itemName.includes('week') || itemName.includes('14') || itemName.includes('7')) {
+            return { p: 'd2a31058-8aa0-4c53-968f-15132be5483e', v: 'cacbc2d2-0700-4059-8732-5ddce3d182e7' };
+        }
+
+        return { p: '7e42da01-fca5-452d-a8c5-f1219848d263', v: '27bc2f01-7182-4795-9b52-31ba2c8f53c8' };
+    }
+
+    const submitBtn = document.getElementById('confirm-btn');
+    const fallbackBtn = document.getElementById('fallback-btn');
+    const fallbackContainer = document.getElementById('fallback-container');
+
+    function getFallbackUrl() {
+        const firstItem = checkoutCart[0] || { name: 'Lifetime Key', quantity: 1 };
+        const mappedData = resolveKomerzaIDs(firstItem);
+        let fbUrl = `https://checkout.komerza.com/product/${mappedData.p}/${mappedData.v}?qty=${firstItem.quantity || 1}`;
+        const emailInput = document.getElementById('user-email').value;
+        
+        if (emailInput) fbUrl += `&email=${encodeURIComponent(emailInput)}`;
+        if (appliedCoupon) fbUrl += `&coupon=${encodeURIComponent(appliedCoupon)}`;
+        
+        // BUG FIX: Inject Affiliate Ref into Fallback URL
+        const savedRef = localStorage.getItem('h4xstore_affiliate_ref');
+        if (savedRef) fbUrl += `&ref=${encodeURIComponent(savedRef)}`;
+
+        return fbUrl;
+    }
+
+    fallbackBtn.addEventListener('click', () => {
+        window.location.href = getFallbackUrl();
+    });
+
+    submitBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      const emailInput = document.getElementById('user-email').value;
+      if(!emailInput || !emailInput.includes('@')) {
+          alert("Please enter a valid email address so we can deliver your keys!");
+          return;
+      }
+
+      if (this.disabled) return;
+      this.disabled = true;
+      this.classList.add('cursor-wait');
+      
+      this.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin text-white"></i> <span class="text-sm">Connecting to Komerza...</span>';
+      lucide.createIcons();
+
+      const currentUser = Auth.getCurrentUser();
+      if (currentUser) {
+          currentUser.checkoutEmail = emailInput;
+          Auth.setSession(currentUser);
+          
+          const usersList = Auth.getUsers();
+          const userIndex = usersList.findIndex(u => u.id === currentUser.id);
+          if (userIndex > -1) {
+              usersList[userIndex].checkoutEmail = emailInput;
+              Auth.saveUsers(usersList);
+          }
+      }
+
+      const validItems = [];
+      checkoutCart.forEach(item => {
+         const mappedData = resolveKomerzaIDs(item);
+         if (mappedData && mappedData.p && mappedData.v) {
+            validItems.push({
+               productId: String(mappedData.p), 
+               variantId: String(mappedData.v),
+               quantity: Number(item.quantity) || 1
+            });
+         }
+      });
+
+      localStorage.setItem('checkout_initiated', 'true');
+
+      const komerzaOptions = {
+          items: validItems,
+          theme: 'dark'
+      };
+
+      if (emailInput) komerzaOptions.email = emailInput;
+      if (appliedCoupon) komerzaOptions.couponCode = appliedCoupon;
+
+      // BUG FIX: Inject Affiliate Ref into Komerza Embed SDK
+      const savedRef = localStorage.getItem('h4xstore_affiliate_ref');
+      if (savedRef) {
+          komerzaOptions.ref = savedRef; 
+      }
+
+      if (window.location.protocol === 'https:') {
+          const currentUrlBase = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+          komerzaOptions.returnUrl = currentUrlBase + '/Success.html';
+      }
+
+      try {
+          if (window.Komerza) {
+              window.Komerza.init(); 
+              window.Komerza.open(komerzaOptions);
+              
+              fallbackContainer.classList.remove('hidden');
+              
+              setTimeout(() => {
+                  submitBtn.disabled = false;
+                  submitBtn.classList.remove('cursor-wait');
+                  submitBtn.innerHTML = 'Open Secure Checkout';
+              }, 3000);
+          } else {
+              throw new Error("SDK not loaded");
+          }
+      } catch (err) {
+          window.location.href = getFallbackUrl();
+      }
+    });
+  </script>
+</body>
+</html>
