@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "jest --runInBand"
-  },
+"scripts": {
+  "start": "node src/server.js",
+  "dev": "nodemon src/server.js",
+  "test": "jest --runInBand",
+  "postinstall": "prisma generate"
+},
   "engines": {
     "node": ">=20.0.0"
   },
