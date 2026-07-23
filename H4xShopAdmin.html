@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>H4xStore - Enterprise Admin</title>
   
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com; img-src 'self' data: https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com ; img-src 'self' data: https:;">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1162,6 +1162,30 @@
         }
 
         try {
+            // Prefer backend-calculated analytics when available
+            const STORE_ID = await window.getKomerzaStoreId();
+            try {
+                const analyticsRes = await apiFetch(`/api/analytics/overview?storeId=${STORE_ID}`);
+                if (analyticsRes.success && analyticsRes.data) {
+                    const m = analyticsRes.data;
+                    safeSetText('dash-revenue', '$' + (m.grossRevenue || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    safeSetText('dash-orders', (m.totalOrders || 0).toLocaleString());
+                    safeSetText('dash-aov', '$' + ((m.averageOrderValue || 0).toFixed(2)));
+                    safeSetText('dash-new-customers', (m.newCustomers || 0).toLocaleString());
+                    safeSetText('dash-returning-customers', (m.returningCustomers || 0).toLocaleString());
+                    safeSetText('dash-conversion', (m.conversionRate !== undefined ? m.conversionRate.toFixed(1) + '%' : '0.0%'));
+                    safeSetText('dash-users', (m.totalUsers || 0).toLocaleString());
+                    cachedOrders = Array.isArray(m.recentOrders) ? m.recentOrders : [];
+                    // Render breakdown and charts provided by backend if available
+                    try { renderRevenueBreakdown(m.grossRevenue || 0); } catch(e) {}
+                    try { updateOverviewChart(); } catch(e) {}
+                    if (syncBtn) { syncBtn.classList.remove('animate-spin'); syncBtn.disabled = false; }
+                    return;
+                }
+            } catch(e) {
+                // Analytics endpoint not available, fall back to client-side aggregation
+                console.warn('Analytics endpoint error, falling back to client aggregation', e);
+            }
             // 1. Local Database Stats
             const users = Auth.getUsers() || [];
             safeSetText('dash-users', users.length.toLocaleString());
@@ -1172,14 +1196,11 @@
             const STORE_ID = await window.getKomerzaStoreId();
             if(!STORE_ID) throw new Error("No Store ID Available");
             
-            const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/orders?PageSize=100`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-            });
-            
-            if(!res.ok) throw new Error("Failed to fetch orders from Komerza");
-            
-            const payload = await res.json();
-            const orders = payload.data || [];
+            const res = await apiFetch(`/api/orders?storeId=${STORE_ID}&PageSize=100`);
+
+            if (!res.success) throw new Error(res.error || "Failed to fetch orders from backend");
+
+            const orders = res.data || [];
             
             // Filter strictly completed/paid orders for accurate revenue
             const validStatuses = ['delivered', 'completed', 'paid', 'success'];
@@ -1595,26 +1616,25 @@
             `You are about to PERMANENTLY delete ${user.username} and all their associated data. This action is completely irreversible.`,
             true,
             user.username,
-            () => {
-                // Delete User
-                users = users.filter(u => u.id !== id);
-                Auth.saveUsers(users);
+            async () => {
+                try {
+                    // Ask backend to delete user and all linked data
+                    const resp = await apiFetch(`/api/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    if (!resp.success) throw new Error(resp.error || 'Failed to delete user');
 
-                // Clean up State (Reviews & Mail)
-                if (adminState.reviews) {
-                    adminState.reviews = adminState.reviews.filter(r => r.userId !== id);
-                }
-                if (adminState.mail) {
-                    adminState.mail = adminState.mail.filter(m => m.userId !== id);
-                }
-                if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
+                    // Update local UI state (do not persist sensitive adminState)
+                    // Refresh user list from backend
+                    await renderUsers();
 
-                Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Deleted User Account`, user.username, 'Account Purged');
-                renderUsers();
-                if(document.getElementById('view-dashboard').classList.contains('active-view')) {
-                    syncOverviewDashboard();
+                    Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Deleted User Account`, user.username, 'Account Purged');
+                    if(document.getElementById('view-dashboard').classList.contains('active-view')) {
+                        syncOverviewDashboard();
+                    }
+                    addToast(`User ${user.username} completely purged from the system.`, 'success');
+                } catch (err) {
+                    console.error('adminDeleteUser error', err);
+                    addToast(err.message || 'Unable to delete user via backend.', 'error');
                 }
-                addToast(`User ${user.username} completely purged from the system.`, 'success');
             }
         );
     };
@@ -1624,7 +1644,7 @@
     // ==========================================
     window.renderAuditLogs = () => {
         let logs = [];
-        try { logs = JSON.parse(localStorage.getItem(Auth.AUDIT_KEY)) || []; } catch(e) {}
+        try { logs = JSON.parse(sessionStorage.getItem(Auth.AUDIT_KEY)) || []; } catch(e) {}
         
         const container = document.getElementById('audit-logs-container');
         
@@ -1717,7 +1737,7 @@
       product.variants[0].isHot = product.bestSeller;
       product.variants[0].isHidden = product.hidden;
       
-      if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
+      // UI-only: do not persist adminState to localStorage (sensitive)
       renderProductManagement();
 
       // 3. Sync critical data (Price, Stock) directly to Komerza API
@@ -1733,12 +1753,10 @@
               const STORE_ID = await window.getKomerzaStoreId();
 
               // Step A: Fetch current variant state from Komerza to satisfy strict API requirements
-              const getRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products?PageSize=100`, {
-                  headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-              });
-              
-              const prodData = await getRes.json();
-              const kProd = (prodData.data || []).find(p => p.id === product.komerzaProductId);
+              const getRes = await apiFetch(`/api/products?storeId=${STORE_ID}&PageSize=100`);
+              if (!getRes.success) throw new Error(getRes.error || 'Failed to fetch products');
+              const prodList = getRes.data || [];
+              const kProd = prodList.find(p => p.id === product.komerzaProductId);
               const currentVariant = kProd ? (kProd.variants || []).find(v => v.id === product.komerzaVariantId) : null;
 
               if (!currentVariant) throw new Error("Variant ID not found on Komerza.");
@@ -1757,20 +1775,12 @@
               };
 
               // Step C: Push the PUT Request
-              const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products/${product.komerzaProductId}/variants/${product.komerzaVariantId}`, {
-                  method: 'PUT',
-                  headers: {
-                      'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(payload)
-              });
+              const res = await apiFetch(`/api/komerza/products/${product.komerzaProductId}/variants/${product.komerzaVariantId}`, { method: 'PUT', body: JSON.stringify(payload) });
 
-              if (res.ok) {
+              if (res.success) {
                   addToast(`[API SUCCESS] Synced ${field} to Komerza!`);
               } else {
-                  const err = await res.json();
-                  throw new Error(err.message || 'Komerza API rejected payload');
+                  throw new Error(res.error || 'Komerza API rejected payload');
               }
           } catch (err) {
               console.error(err);
@@ -1812,33 +1822,24 @@
                         comment: `${req.currency} Payout to: ${req.address}`
                     };
                     
-                    const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/${req.customerId}/payouts`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
-                            'Content-Type': 'application/json',
-                            'User-Agent': 'H4xStore/1.0'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (res.ok) {
-                        const data = await res.json();
-                        
+                    const res = await apiFetch(`/api/affiliates/${req.customerId}/payouts`, { method: 'POST', body: JSON.stringify(payload) });
+
+                    if (res.success) {
+                        const data = res.data;
+
                         req.status = 'Completed';
-                        req.komerzaPayoutId = data.data.id;
+                        req.komerzaPayoutId = data.id || (data && data.id) || null;
                         req.dateCompleted = new Date().toISOString();
-                        
-                        saveStoreState(adminState);
+
+                        // Do not persist adminState to localStorage (sensitive)
                         renderWithdrawals();
                         addToast('Withdrawal officially completed and logged!', 'success');
                         Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Approved Affiliate Payout`, req.username, `$${req.amount}`);
-                        
+
                         adminRenderAffiliates();
-                        
+
                     } else {
-                        const err = await res.json().catch(()=>({}));
-                        addToast(`[API ERROR] ${err.message || 'Failed to deduct balance from Komerza'}`, 'error');
+                        addToast(`[API ERROR] ${res.error || 'Failed to deduct balance from backend'}`, 'error');
                     }
                 } catch(e) {
                     addToast(`[ERROR] ${e.message}`, 'error');
@@ -1866,7 +1867,7 @@
                 req.voidReason = "Declined by Administrator"; // Default reason to avoid native prompt()
                 req.dateCompleted = new Date().toISOString();
                 
-                saveStoreState(adminState);
+                // UI-only sync omitted: do not save adminState to client storage
                 renderWithdrawals();
                 addToast('Withdrawal rejected successfully.', 'success');
                 Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Rejected Affiliate Payout`, req.username, `$${req.amount}`);
@@ -1956,11 +1957,9 @@
             if(!STORE_ID) return addToast('[ERROR] Store ID missing.');
 
             // Load Stats
-            const statsRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/stats`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}` }
-            });
-            if (statsRes.ok) {
-                const stats = await statsRes.json();
+            const statsRes = await apiFetch(`/api/affiliates/stats?storeId=${STORE_ID}`);
+            if (statsRes.success) {
+                const stats = statsRes.data;
                 document.getElementById('affiliate-stat-total').textContent = stats.data.totalAffiliates || 0;
                 document.getElementById('affiliate-stat-paid').textContent = '$' + (stats.data.commissionsPaid || 0).toFixed(2);
                 document.getElementById('affiliate-stat-revenue').textContent = '$' + (stats.data.referralRevenue || 0).toFixed(2);
@@ -1968,11 +1967,9 @@
             }
 
             // Load List
-            const listRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}` }
-            });
-            if (listRes.ok) {
-                const list = await listRes.json();
+            const listRes = await apiFetch(`/api/affiliates?storeId=${STORE_ID}`);
+            if (listRes.success) {
+                const list = listRes.data;
                 const tbody = document.getElementById('affiliates-table-body');
                 tbody.innerHTML = (list.data || []).map(a => `
                     <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -2009,16 +2006,12 @@
             async () => {
                 try {
                     const STORE_ID = await window.getKomerzaStoreId();
-                    const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/${customerId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}` }
-                    });
-                    if(res.ok) {
+                    const res = await apiFetch(`/api/affiliates/${customerId}`, { method: 'DELETE' });
+                    if (res.success) {
                         addToast('[SUCCESS] Affiliate deleted.');
                         adminRenderAffiliates();
                     } else {
-                        const err = await res.json();
-                        addToast('[API ERROR] ' + err.message, 'error');
+                        addToast('[API ERROR] ' + (res.error || 'Delete failed'), 'error');
                     }
                 } catch(e) {
                     addToast('[API ERROR] ' + e.message, 'error');
@@ -2030,10 +2023,8 @@
     window.adminEditAffiliate = async (customerId) => {
         try {
             const STORE_ID = await window.getKomerzaStoreId();
-            const listRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}` }
-            });
-            const list = await listRes.json();
+            const listRes = await apiFetch(`/api/affiliates?storeId=${STORE_ID}`);
+            const list = listRes.data;
             const aff = list.data.find(a => a.customerId === customerId);
             if(aff) {
                 document.getElementById('edit-aff-customer-id').value = aff.customerId;
@@ -2070,22 +2061,14 @@
                 balance: balance,
                 isEnabled: isEnabled
             };
-            const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/affiliates/${customerId}`, {
-                method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                addToast('[SUCCESS] Affiliate updated in Komerza.');
+            const res = await apiFetch(`/api/affiliates/${customerId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+            if (res.success) {
+                addToast('[SUCCESS] Affiliate updated.');
                 closeAffiliateModal();
                 adminRenderAffiliates();
-                Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Modified Komerza Affiliate Record: ${customerId}`, null, `Status: ${isEnabled}`);
+                Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Modified Affiliate Record: ${customerId}`, null, `Status: ${isEnabled}`);
             } else {
-                const err = await res.json();
-                addToast('[API ERROR] ' + (err.message || 'Failed to update.'), 'error');
+                addToast('[API ERROR] ' + (res.error || 'Failed to update.'), 'error');
             }
         } catch(e) {
             addToast('[API ERROR] ' + e.message, 'error');
@@ -2116,26 +2099,20 @@
           addToast('Syncing keys to Komerza backend...');
           const STORE_ID = await window.getKomerzaStoreId();
           
-          const response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products/${product.komerzaProductId}/variants/${product.komerzaVariantId}/items`, {
+          const response = await apiFetch(`/api/komerza/products/${product.komerzaProductId}/variants/${product.komerzaVariantId}/items`, {
               method: 'PUT',
-              headers: {
-                  'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
-                  'Content-Type': 'application/json'
-              },
               body: JSON.stringify({ items: keys })
           });
 
-          if (!response.ok) {
-              const err = await response.json().catch(() => ({}));
-              throw new Error(err.message || `API HTTP ${response.status}`);
+          if (!response.success) {
+              throw new Error(response.error || 'Failed to inject keys');
           }
 
           // UI Local State Update
           product.stock += keys.length;
           if (product.stock > (product.maxStock || 0)) product.maxStock = product.stock;
           
-          if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-          
+          // UI-only update performed; do not persist adminState to localStorage
           addToast(`[SUCCESS] Injected ${keys.length} keys into Komerza Database.`);
           inputElem.value = '';
           renderProductManagement();
@@ -2176,11 +2153,9 @@
           addToast(`Deploying coupon ${isEditing ? 'update' : 'creation'} to Komerza...`);
           const STORE_ID = await window.getKomerzaStoreId();
           
-          // Step 1: Check if the coupon exists on Komerza to get its ID
-          const listRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/coupons`, {
-              headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-          });
-          const listData = await listRes.json();
+          // Step 1: Check if the coupon exists on backend coupon registry to get its ID
+          const listRes = await apiFetch(`/api/coupons?storeId=${STORE_ID}`);
+          const listData = listRes.data || {};
           
           // If editing, we look for the old code name to find its Komerza ID
           let targetCoupon = null;
@@ -2200,24 +2175,21 @@
 
           let response;
           if (isEditing && targetCoupon) {
-              // UPDATE Komerza Database
-              response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/coupons/${targetCoupon.id}`, {
+              // UPDATE Coupon via backend
+              response = await apiFetch(`/api/coupons/${targetCoupon.id}`, {
                   method: 'PUT',
-                  headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'Content-Type': 'application/json' },
                   body: JSON.stringify(payload)
               });
           } else {
-              // CREATE (Fallback to create if editing but not found on backend)
-              response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/coupons`, {
+              // CREATE (Fallback to create if not found)
+              response = await apiFetch(`/api/coupons`, {
                   method: 'POST',
-                  headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
+                  body: JSON.stringify(Object.assign({ storeId: STORE_ID }, payload))
               });
           }
 
-          if (!response.ok) {
-              const err = await response.json().catch(() => ({}));
-              throw new Error(err.message || `API HTTP ${response.status}`);
+          if (!response.success) {
+              throw new Error(response.error || 'Coupon API request failed');
           }
 
           // Update Local Admin State
@@ -2229,8 +2201,7 @@
               Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Created Komerza Coupon', null, code);
           }
           
-          if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-          
+          // Do not persist coupon list to localStorage; coupons are managed by backend
           cancelDiscountEdit();
           renderDiscountCodes();
           addToast(`[SUCCESS] Global coupon ${isEditing ? 'updated' : 'created'} securely.`);
@@ -2253,26 +2224,19 @@
                   addToast(`Purging coupon ${codeToDelete} from Komerza...`);
                   const STORE_ID = await window.getKomerzaStoreId();
                   
-                  // Fetch ID from Komerza
-                  const listRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/coupons`, {
-                      headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-                  });
-                  const listData = await listRes.json();
+                  // Fetch ID from coupon registry
+                  const listRes = await apiFetch(`/api/coupons?storeId=${STORE_ID}`);
+                  const listData = listRes.data || {};
                   const targetCoupon = (listData.data || []).find(c => c.code.toUpperCase() === codeToDelete.toUpperCase());
 
-                  // Delete from Komerza
+                  // Delete coupon via backend domain endpoint
                   if (targetCoupon) {
-                      const response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/coupons/${targetCoupon.id}`, {
-                          method: 'DELETE',
-                          headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-                      });
-                      
-                      if (!response.ok) throw new Error(`API HTTP ${response.status}`);
+                      const response = await apiFetch(`/api/coupons/${targetCoupon.id}`, { method: 'DELETE' });
+                      if (!response.success) throw new Error(response.error || 'Failed to delete coupon');
                   }
 
-                  // Remove Locally
+                  // Update UI locally (do not persist sensitive admin data to localStorage)
                   adminState.discountCodes.splice(index, 1);
-                  if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
                   
                   Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Deleted Komerza Coupon', codeToDelete, null);
                   
@@ -2282,9 +2246,8 @@
               } catch (error) {
                   console.error(error);
                   addToast(`[API ERROR] Failed to delete from backend: ${error.message}`, 'error');
-                  // Force local delete anyway so the UI doesn't get bricked
+                  // Force local delete anyway so the UI doesn't get bricked (UI only)
                   adminState.discountCodes.splice(index, 1);
-                  if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
                   renderDiscountCodes();
               }
           }
@@ -2324,7 +2287,7 @@
       const code = adminState.discountCodes[index];
       if (!code) return;
       code.active = !code.active;
-      if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
+      // UI-only toggle: do not persist coupon activation state in client storage
       
       Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Toggled Local Discount State', code.code, code.active ? 'Active' : 'Disabled');
       
@@ -2359,171 +2322,259 @@
     }
     
     // ==========================================
-    // BROADCASTS (TRANSMISSIONS)
+    // ==========================================
+    // BROADCASTS (TRANSMISSIONS) - BACKEND DRIVEN
     // ==========================================
 
-    window.adminAddAnnouncement = () => {
+    async function adminRenderAnnouncements() {
+      const announcementList = document.getElementById('announcement-list');
+      if (!announcementList) return;
+      try {
+        const res = await apiFetch('/api/announcements?PageSize=200');
+        if (!res.success) {
+          announcementList.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">Failed to load announcements: ${res.error}</p>`;
+          return;
+        }
+
+        const announcements = Array.isArray(res.data) ? res.data : (res.data.items || res.data.announcements || []);
+        adminState.site = adminState.site || {};
+        adminState.site.announcements = announcements;
+
+        if (announcements.length === 0) {
+          announcementList.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">[No broadcasts deployed]</p>`;
+          return;
+        }
+
+        announcementList.innerHTML = announcements.map(item => `
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 rounded-2xl border border-white/5 bg-black/40 hover:border-white/10 transition-all">
+            <div>
+              <div class="text-xs font-bold font-sans text-white uppercase tracking-[0.2em]">${item.label}</div>
+              <div class="text-zinc-500 text-sm mt-1 font-tech tracking-wide">"${item.text}"</div>
+            </div>
+            <button onclick="adminRemoveAnnouncement('${encodeURIComponent(item.id)}')" class="px-5 py-2.5 rounded-xl border border-red-900/30 bg-red-950/20 text-red-500/70 text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-red-900/50 hover:text-white hover:border-red-500/50 transition-all">Purge</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('adminRenderAnnouncements error', err);
+        announcementList.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">Unable to load announcements.</p>`;
+      }
+    }
+
+    window.adminAddAnnouncement = async () => {
       const labelInput = document.getElementById('announcement-label');
       const textInput = document.getElementById('announcement-text');
       const label = sanitizeForBtoa(labelInput.value.trim());
       const text = sanitizeForBtoa(textInput.value.trim());
       if (!label || !text) return addToast('Requires title and payload data.', 'error');
-      
-      adminState.site.announcements.unshift({ id: `ann_${Date.now()}`, label, text });
-      if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-      
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Deployed Broadcast', null, label);
-      
-      labelInput.value = ''; textInput.value = '';
-      renderAnnouncements();
-      addToast('Transmission deployed successfully.');
+
+      try {
+        const payload = { label, text };
+        const res = await apiFetch('/api/announcements', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.success) throw new Error(res.error || 'Failed to deploy announcement');
+
+        labelInput.value = ''; textInput.value = '';
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Deployed Broadcast', null, label);
+        addToast('Transmission deployed successfully.');
+        await adminRenderAnnouncements();
+      } catch (err) {
+        console.error('adminAddAnnouncement error', err);
+        addToast(err.message || 'Unable to deploy announcement via backend.', 'error');
+      }
     };
 
-    window.adminRemoveAnnouncement = (index) => {
-      const removed = adminState.site.announcements[index];
-      adminState.site.announcements.splice(index, 1);
-      if(typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-      
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Purged Broadcast', removed.label, null);
-      
-      renderAnnouncements();
-      addToast('Transmission purged from network.');
-    };
+    window.adminRemoveAnnouncement = async (id) => {
+      try {
+        const res = await apiFetch(`/api/announcements/${encodeURIComponent(decodeURIComponent(id))}`, { method: 'DELETE' });
+        if (!res.success) throw new Error(res.error || 'Failed to remove announcement');
 
-    function renderAnnouncements() {
-      const announcementList = document.getElementById('announcement-list');
-      if(!announcementList) return;
-      const announcements = adminState.site.announcements;
-      announcementList.innerHTML = announcements.map((item, index) => `
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 rounded-2xl border border-white/5 bg-black/40 hover:border-white/10 transition-all">
-          <div>
-            <div class="text-xs font-bold font-sans text-white uppercase tracking-[0.2em]">${item.label}</div>
-            <div class="text-zinc-500 text-sm mt-1 font-tech tracking-wide">"${item.text}"</div>
-          </div>
-          <button onclick="adminRemoveAnnouncement(${index})" class="px-5 py-2.5 rounded-xl border border-red-900/30 bg-red-950/20 text-red-500/70 text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-red-900/50 hover:text-white hover:border-red-500/50 transition-all">Purge</button>
-        </div>
-      `).join('');
-    }
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Purged Broadcast', null, id);
+        addToast('Transmission purged from network.');
+        await adminRenderAnnouncements();
+      } catch (err) {
+        console.error('adminRemoveAnnouncement error', err);
+        addToast(err.message || 'Unable to remove announcement via backend.', 'error');
+      }
+    };
 
     // ==========================================
-    // YOUTUBE MEDIA
+    // YOUTUBE MEDIA - BACKEND DRIVEN
     // ==========================================
 
     function extractYouTubeId(url) {
       if (!url) return null;
       let trimmed = url.trim();
-      
-      // Extremely robust regex for YouTube IDs (11 chars)
-      // Handles youtu.be, youtube.com/watch?v=, youtube.com/embed/, youtube.com/v/, youtube.com/shorts/
+
       const regExp = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:(?:watch)?\?(?:.*&)?v(?:i)?=|(?:embed|v|vi|user|shorts)\/))([^?&\"'>]{11})/;
       const match = trimmed.match(regExp);
-      if (match && match[1]) {
-          return match[1];
-      }
-      
-      // If it's already an exactly 11-char string (raw ID)
-      if (trimmed.length === 11 && !trimmed.includes(' ') && !trimmed.includes('/')) {
-          return trimmed;
-      }
-      
-      // Fallback manual URL parsing
+      if (match && match[1]) return match[1];
+      if (trimmed.length === 11 && !trimmed.includes(' ') && !trimmed.includes('/')) return trimmed;
       try {
-          if (!trimmed.startsWith('http')) trimmed = 'https://' + trimmed;
-          const parsedUrl = new URL(trimmed);
-          if (parsedUrl.hostname.includes('youtube.com')) {
-              if (parsedUrl.pathname.startsWith('/shorts/')) {
-                  const id = parsedUrl.pathname.split('/')[2];
-                  if (id && id.length === 11) return id;
-              }
-              const paramV = parsedUrl.searchParams.get('v');
-              if (paramV && paramV.length >= 11) return paramV.substring(0, 11);
-          } else if (parsedUrl.hostname.includes('youtu.be')) {
-              const pathV = parsedUrl.pathname.substring(1);
-              if (pathV && pathV.length >= 11) return pathV.substring(0, 11);
+        if (!trimmed.startsWith('http')) trimmed = 'https://' + trimmed;
+        const parsedUrl = new URL(trimmed);
+        if (parsedUrl.hostname.includes('youtube.com')) {
+          if (parsedUrl.pathname.startsWith('/shorts/')) {
+            const id = parsedUrl.pathname.split('/')[2];
+            if (id && id.length === 11) return id;
           }
+          const paramV = parsedUrl.searchParams.get('v');
+          if (paramV && paramV.length >= 11) return paramV.substring(0, 11);
+        } else if (parsedUrl.hostname.includes('youtu.be')) {
+          const pathV = parsedUrl.pathname.substring(1);
+          if (pathV && pathV.length >= 11) return pathV.substring(0, 11);
+        }
       } catch (e) {
-          // Ignore parsing errors for raw strings
+        // ignore
       }
-      
       return null;
     }
 
-    window.adminAddVideo = () => {
+    async function adminRenderVideos() {
+      const list = document.getElementById('video-management-list');
+      const counter = document.getElementById('video-count');
+      if(!list) return;
+      try {
+        const res = await apiFetch('/api/media?PageSize=200');
+        if (!res.success) {
+          list.innerHTML = `<div class="text-center p-10 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p class="text-zinc-600 font-tech text-xs uppercase tracking-[0.2em]">Failed to load media: ${res.error}</p></div>`;
+          if(counter) counter.innerText = '0 Streams Active';
+          return;
+        }
+
+        const videos = Array.isArray(res.data) ? res.data : (res.data.items || res.data.media || []);
+        adminState.videos = videos;
+        if(counter) counter.innerText = `${videos.length} Streams Active`;
+
+        if (videos.length === 0) {
+          list.innerHTML = `<div class="text-center p-10 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p class="text-zinc-600 font-tech text-xs uppercase tracking-[0.2em]">No media streams detected in database</p></div>`;
+          return;
+        }
+
+        list.innerHTML = videos.map((video) => `
+          <div class="flex items-center gap-5 p-3 pr-5 rounded-2xl border border-white/5 bg-black/40 hover:border-white/20 transition-all group">
+            <div class="w-28 h-16 rounded-xl overflow-hidden shrink-0 relative bg-black border border-white/5">
+              <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+              <div class="absolute inset-0 flex items-center justify-center"><i data-lucide="play" class="w-5 h-5 text-white/50 group-hover:text-white drop-shadow-md"></i></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-sm text-white truncate font-sans tracking-wide">${video.title}</h4>
+              <p class="text-[9px] text-zinc-500 font-tech tracking-[0.2em] uppercase mt-1.5">ID: ${video.youtubeId} &bull; ${video.publisher || 'System'}</p>
+            </div>
+            <button onclick="adminRemoveVideo('${encodeURIComponent(video.id)}')" class="p-3 rounded-xl bg-red-950/20 border border-red-900/30 text-red-500/70 hover:bg-red-900/50 hover:text-white hover:border-red-500/50 transition-all shrink-0">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch (err) {
+        console.error('adminRenderVideos error', err);
+        list.innerHTML = `<div class="text-center p-10 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p class="text-zinc-600 font-tech text-xs uppercase tracking-[0.2em]">Unable to load media.</p></div>`;
+      }
+    }
+
+    window.adminAddVideo = async () => {
       const titleInput = document.getElementById('video-title-input');
       const urlInput = document.getElementById('video-url-input');
       const publisherInput = document.getElementById('video-publisher-input');
-      
+
       const title = sanitizeForBtoa(titleInput.value.trim());
       const rawUrl = urlInput.value.trim();
       const publisher = sanitizeForBtoa(publisherInput.value.trim());
-      
+
       if (!title || !rawUrl) return addToast('System Error: Title and URL parameters required.', 'error');
-      
       const youtubeId = extractYouTubeId(rawUrl);
       if (!youtubeId) return addToast('System Error: Invalid URL structure detected.', 'error');
 
-      const dateString = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      try {
+        const payload = { youtubeId, title, publisher };
+        const res = await apiFetch('/api/media', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.success) throw new Error(res.error || 'Failed to add media');
 
-      adminState.videos.unshift({
-        id: `vid_${Date.now()}`,
-        youtubeId: youtubeId,
-        title: title,
-        publisher: publisher || 'System Channel',
-        date: dateString
-      });
-
-      if (typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Injected Videos Stream', null, title);
-      
-      titleInput.value = ''; urlInput.value = ''; publisherInput.value = '';
-      addToast('Videos stream successfully injected.');
-      renderYoutubeView();
-    };
-
-    window.adminRemoveVideo = (index) => {
-      const removed = adminState.videos[index];
-      adminState.videos.splice(index, 1);
-      if (typeof window.saveStoreState === 'function') window.saveStoreState(adminState);
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Purged Videos Stream', removed.title, null);
-      addToast('Videos stream purged from gallery.');
-      renderYoutubeView();
-    };
-
-    function renderYoutubeView() {
-      const list = document.getElementById('video-management-list');
-      const counter = document.getElementById('video-count');
-      if (!list) return;
-
-      counter.innerText = `${adminState.videos.length} Streams Active`;
-
-      if (adminState.videos.length === 0) {
-        list.innerHTML = `<div class="text-center p-10 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p class="text-zinc-600 font-tech text-xs uppercase tracking-[0.2em]">No media streams detected in database</p></div>`;
-        return;
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Injected Videos Stream', null, title);
+        titleInput.value = ''; urlInput.value = ''; publisherInput.value = '';
+        addToast('Videos stream successfully injected.');
+        await adminRenderVideos();
+      } catch (err) {
+        console.error('adminAddVideo error', err);
+        addToast(err.message || 'Unable to add media via backend.', 'error');
       }
+    };
 
-      list.innerHTML = adminState.videos.map((video, index) => `
-        <div class="flex items-center gap-5 p-3 pr-5 rounded-2xl border border-white/5 bg-black/40 hover:border-white/20 transition-all group">
-          <div class="w-28 h-16 rounded-xl overflow-hidden shrink-0 relative bg-black border border-white/5">
-            <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-            <div class="absolute inset-0 flex items-center justify-center"><i data-lucide="play" class="w-5 h-5 text-white/50 group-hover:text-white drop-shadow-md"></i></div>
+    window.adminRemoveVideo = async (idOrIndex) => {
+      try {
+        const id = decodeURIComponent(idOrIndex);
+        const res = await apiFetch(`/api/media/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.success) throw new Error(res.error || 'Failed to remove media');
+
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Purged Videos Stream', null, id);
+        addToast('Videos stream purged from gallery.');
+        await adminRenderVideos();
+      } catch (err) {
+        console.error('adminRemoveVideo error', err);
+        addToast(err.message || 'Unable to remove media via backend.', 'error');
+      }
+    };
+
+    // Initial load for media and announcements
+    adminRenderAnnouncements();
+    adminRenderVideos();
+    // Fetch and render partners from backend
+    async function adminRenderPartners() {
+      const listElement = document.getElementById('admin-partners-list');
+      const countElement = document.getElementById('partner-count');
+      if (!listElement) return;
+
+      try {
+        const res = await apiFetch('/api/partners?PageSize=200');
+        if (!res.success) {
+          listElement.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">Failed to load partners: ${res.error}</p>`;
+          if (countElement) countElement.textContent = '0 Nodes';
+          return;
+        }
+
+        const partners = Array.isArray(res.data) ? res.data : (res.data.items || res.data.partners || []);
+        adminState.partners = partners;
+
+        if (countElement) countElement.textContent = `${partners.length} Nodes`;
+
+        if (partners.length === 0) {
+          listElement.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">[No Operational Alliances Deployed]</p>`;
+          return;
+        }
+
+        listElement.innerHTML = partners.map(p => `
+          <div class="bg-black/40 p-4 rounded-2xl border ${p.isVip ? 'border-primary/30 bg-primary/[0.02]' : 'border-white/5'} flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 p-1 flex items-center justify-center shrink-0">
+                <img src="${p.logo || 'https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png'}" class="w-full h-full object-contain">
+              </div>
+              <div>
+                <h4 class="font-bold text-white tracking-wide text-base flex items-center gap-2">
+                  ${p.name}
+                  ${p.isVip ? '<span class="text-[8px] bg-primary/20 border border-primary/50 text-primary px-1.5 py-0.5 rounded tracking-widest font-black font-fantasy">VIP</span>' : ''}
+                </h4>
+                <p class="text-xs text-zinc-500 font-sans mt-0.5 max-w-md truncate">${p.description}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <button onclick="adminTogglePartnerVip('${p.id}')" class="px-3 py-2 text-[10px] uppercase font-bold tracking-widest font-tech rounded-lg border transition-all ${p.isVip ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-zinc-800' : 'bg-white/5 text-zinc-400 border-white/10 hover:border-primary hover:text-white'}">
+                ${p.isVip ? 'Demote Standard' : 'Promote VIP'}
+              </button>
+              <button onclick="adminDeletePartner('${p.id}')" class="w-9 h-9 rounded-lg bg-red-950/40 hover:bg-primary border border-red-900/30 text-zinc-400 hover:text-white flex items-center justify-center transition-all">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="font-bold text-sm text-white truncate font-sans tracking-wide">${video.title}</h4>
-            <p class="text-[9px] text-zinc-500 font-tech tracking-[0.2em] uppercase mt-1.5">ID: ${video.youtubeId} &bull; ${video.publisher || 'System'}</p>
-          </div>
-          <button onclick="adminRemoveVideo(${index})" class="p-3 rounded-xl bg-red-950/20 border border-red-900/30 text-red-500/70 hover:bg-red-900/50 hover:text-white hover:border-red-500/50 transition-all shrink-0">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-        </div>
-      `).join('');
-      lucide.createIcons();
+        `).join('');
+        lucide.createIcons();
+      } catch (err) {
+        console.error('adminRenderPartners error', err);
+        listElement.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">Unable to load partners.</p>`;
+        if (countElement) countElement.textContent = '0 Nodes';
+      }
     }
 
-    // ==========================================
-    // PARTNERS
-    // ==========================================
-
-    window.adminAddPartner = () => {
+    // Add partner via backend
+    window.adminAddPartner = async () => {
       const name = sanitizeForBtoa(document.getElementById('partner-name-input').value.trim());
       const desc = sanitizeForBtoa(document.getElementById('partner-desc-input').value.trim());
       const logo = document.getElementById('partner-logo-input').value.trim();
@@ -2532,105 +2583,71 @@
 
       if (!name || !desc) return addToast('[ERROR] Designation and description required', 'error');
 
-      // Add resilient link formatter to prevent internal HTML redirects
       if (link && link !== '#' && !link.startsWith('http://') && !link.startsWith('https://')) {
           link = 'https://' + link;
       }
       if (!link) link = '#';
 
-      let partners = JSON.parse(localStorage.getItem('h4xstore_partners')) || [];
-      partners.push({
-        id: Date.now().toString(),
-        name: name,
-        description: desc,
-        logo: logo || 'https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png',
-        link: link,
-        isVip: isVip
-      });
+      try {
+        const payload = { name, description: desc, logo: logo || null, link, isVip };
+        const res = await apiFetch('/api/partners', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.success) throw new Error(res.error || 'Failed to create partner');
 
-      localStorage.setItem('h4xstore_partners', JSON.stringify(partners));
-      
-      if (!adminState.partners) adminState.partners = [];
-      adminState.partners = partners;
-      if (typeof saveStoreState === 'function') saveStoreState(adminState);
+        // Refresh partners list
+        await adminRenderPartners();
 
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Created Partner Partners', null, name);
-      
-      document.getElementById('partner-name-input').value = '';
-      document.getElementById('partner-desc-input').value = '';
-      document.getElementById('partner-logo-input').value = '';
-      document.getElementById('partner-link-input').value = '';
-      document.getElementById('partner-vip-checkbox').checked = false;
+        document.getElementById('partner-name-input').value = '';
+        document.getElementById('partner-desc-input').value = '';
+        document.getElementById('partner-logo-input').value = '';
+        document.getElementById('partner-link-input').value = '';
+        document.getElementById('partner-vip-checkbox').checked = false;
 
-      adminRenderPartners();
-      addToast(`[DEPLOYED] Synergy Matrix for ${name}`);
-    };
-
-    window.adminTogglePartnerVip = (id) => {
-      let partners = JSON.parse(localStorage.getItem('h4xstore_partners')) || [];
-      const partner = partners.find(p => p.id === id);
-      if(!partner) return;
-      
-      partners = partners.map(p => p.id === id ? { ...p, isVip: !p.isVip } : p);
-      localStorage.setItem('h4xstore_partners', JSON.stringify(partners));
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Toggled Partner VIP Status', partner.name, !partner.isVip ? 'VIP' : 'Standard');
-      
-      adminRenderPartners();
-      addToast('[CONFIG UPDATED] Modified VIP Clearance Level');
-    };
-
-    window.adminDeletePartner = (id) => {
-      let partners = JSON.parse(localStorage.getItem('h4xstore_partners')) || [];
-      const partner = partners.find(p => p.id === id);
-      if(!partner) return;
-      
-      partners = partners.filter(p => p.id !== id);
-      localStorage.setItem('h4xstore_partners', JSON.stringify(partners));
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Deleted Partner Partners', partner.name, null);
-      
-      adminRenderPartners();
-      addToast('[TERMINATED] Partners node scrubbed from architecture');
-    };
-
-    function adminRenderPartners() {
-      const partners = JSON.parse(localStorage.getItem('h4xstore_partners')) || [];
-      const listElement = document.getElementById('admin-partners-list');
-      const countElement = document.getElementById('partner-count');
-
-      if (countElement) countElement.textContent = `${partners.length} Nodes`;
-      if (!listElement) return;
-
-      if (partners.length === 0) {
-        listElement.innerHTML = `<p class="text-zinc-600 text-sm tracking-widest text-center py-10 uppercase font-tech font-bold">[No Operational Alliances Deployed]</p>`;
-        return;
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Created Partner', null, name);
+        addToast(`[DEPLOYED] Synergy Matrix for ${name}`);
+      } catch (err) {
+        console.error('adminAddPartner error', err);
+        addToast(err.message || 'Unable to create partner via backend.', 'error');
       }
+    };
 
-      listElement.innerHTML = partners.map(p => `
-        <div class="bg-black/40 p-4 rounded-2xl border ${p.isVip ? 'border-primary/30 bg-primary/[0.02]' : 'border-white/5'} flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 p-1 flex items-center justify-center shrink-0">
-              <img src="${p.logo || 'https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png'}" class="w-full h-full object-contain">
-            </div>
-            <div>
-              <h4 class="font-bold text-white tracking-wide text-base flex items-center gap-2">
-                ${p.name}
-                ${p.isVip ? '<span class="text-[8px] bg-primary/20 border border-primary/50 text-primary px-1.5 py-0.5 rounded tracking-widest font-black font-fantasy">VIP</span>' : ''}
-              </h4>
-              <p class="text-xs text-zinc-500 font-sans mt-0.5 max-w-md truncate">${p.description}</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 self-end sm:self-center">
-            <button onclick="adminTogglePartnerVip('${p.id}')" class="px-3 py-2 text-[10px] uppercase font-bold tracking-widest font-tech rounded-lg border transition-all ${p.isVip ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-zinc-800' : 'bg-white/5 text-zinc-400 border-white/10 hover:border-primary hover:text-white'}">
-              ${p.isVip ? 'Demote Standard' : 'Promote VIP'}
-            </button>
-            <button onclick="adminDeletePartner('${p.id}')" class="w-9 h-9 rounded-lg bg-red-950/40 hover:bg-primary border border-red-900/30 text-zinc-400 hover:text-white flex items-center justify-center transition-all">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
+    // Toggle VIP via backend
+    window.adminTogglePartnerVip = async (id) => {
+      try {
+        // find current state locally if available
+        const local = (adminState.partners || []).find(p => p.id === id);
+        const desired = local ? !local.isVip : true;
+        const res = await apiFetch(`/api/partners/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ isVip: desired }) });
+        if (!res.success) throw new Error(res.error || 'Failed to update partner');
+
+        await adminRenderPartners();
+        const name = res.data && (res.data.name || (local && local.name)) || 'Partner';
+        Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Toggled Partner VIP Status', name, desired ? 'VIP' : 'Standard');
+        addToast('[CONFIG UPDATED] Modified VIP Clearance Level');
+      } catch (err) {
+        console.error('adminTogglePartnerVip error', err);
+        addToast(err.message || 'Unable to update partner via backend.', 'error');
+      }
+    };
+
+    // Delete partner via backend
+    window.adminDeletePartner = (id) => {
+      openConfirmModal('Delete Partner','Are you sure you want to delete this partner? This will remove it from the system.', false, null, async () => {
+        try {
+          const res = await apiFetch(`/api/partners/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (!res.success) throw new Error(res.error || 'Failed to delete partner');
+
+          await adminRenderPartners();
+          Auth.logAudit(currentAdmin.username, currentAdmin.discordId, 'Deleted Partner', id, null);
+          addToast('[TERMINATED] Partners node scrubbed from architecture');
+        } catch (err) {
+          console.error('adminDeletePartner error', err);
+          addToast(err.message || 'Unable to delete partner via backend.', 'error');
+        }
+      });
+    };
+
+    // Initial render
+    adminRenderPartners();
     
     // 1. Unbreakable Tab Transitions Fix
     function bindAdminTabs() {
@@ -2757,15 +2774,15 @@
           const STORE_ID = await window.getKomerzaStoreId();
           
           // Step A: Fetch existing variant data to satisfy strict Komerza API requirements
-          const prodRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products?PageSize=100`, {
-              headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-          });
-          const prodData = await prodRes.json();
-          
+          const prodRes = await apiFetch(`/api/products?storeId=${STORE_ID}&PageSize=100`);
+          if (!prodRes.success) throw new Error(prodRes.error || 'Failed to fetch products');
+          const prodList = prodRes.data || [];
+
           let currentVariant = null;
-          for (let p of prodData.data || []) {
-              if (p.id === productId) {
-                  currentVariant = (p.variants || []).find(v => v.id === variantId);
+          for (let p of prodList) {
+              // support both internal and Komerza ids
+              if (p.id === productId || p.komerzaProductId === productId) {
+                  currentVariant = (p.variants || []).find(v => v.id === variantId || v.komerzaVariantId === variantId);
                   break;
               }
           }
@@ -2800,19 +2817,11 @@
           };
 
           // Step D: Push Update securely to Komerza
-          const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products/${productId}/variants/${variantId}`, {
-              method: 'PUT',
-              headers: { 
-                  'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'H4xStore/1.0' 
-              },
-              body: JSON.stringify(payload)
-          });
+          const res = await apiFetch(`/api/komerza/products/${productId}/variants/${variantId}`, { method: 'PUT', body: JSON.stringify(payload) });
 
-          if (res.ok) {
-              alert("Store Config Synchronized! Variant successfully updated in Komerza.");
-              
+          if (res.success) {
+              alert("Store Config Synchronized! Variant successfully updated.");
+               
               // Sync Local State for instant frontend visual feedback
               if (typeof loadStoreState === 'function') {
                   const state = loadStoreState();
@@ -2831,18 +2840,17 @@
                               });
                           }
                       });
-                      if (updatedLocal) saveStoreState(state);
+                      if (updatedLocal) { /* UI-only sync performed; do not persist product/inventory state to localStorage */ }
                   }
               }
           } else {
-              const err = await res.json();
-              alert("Komerza API Error: " + JSON.stringify(err.invalidFields || err.message || "Failed to update variant."));
+              alert("Komerza API Error: " + JSON.stringify(res.error || "Failed to update variant."));
           }
       } catch (e) {
           console.error(e);
           alert("Network error connecting to Komerza backend.");
       }
-      
+       
       btnElement.innerHTML = origText;
       btnElement.disabled = false;
   };
@@ -2906,15 +2914,13 @@
           if (!STORE_ID) throw new Error("Missing Store ID");
 
           const [storeRes, permRes] = await Promise.all([
-              fetch(`https://api.komerza.com/stores/${STORE_ID}`, { headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' } }),
-              fetch(`https://api.komerza.com/stores/${STORE_ID}/permissions`, { headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' } })
+              apiFetch(`/api/komerza/stores/${STORE_ID}`),
+              apiFetch(`/api/komerza/stores/${STORE_ID}/permissions`)
           ]);
 
-          if (storeRes.ok && permRes.ok) {
-              const storeData = await storeRes.json();
-              const permData = await permRes.json();
-              const store = storeData.data;
-              const perms = permData.data;
+          if (storeRes.success && permRes.success) {
+              const store = storeRes.data;
+              const perms = permRes.data;
 
               const permsHtml = (perms.permissions || []).map(p => `<span class="bg-primary/20 border border-primary/40 text-primary px-2 py-1 rounded text-[10px] font-black tracking-widest uppercase">${p}</span>`).join('');
               const gatewaysHtml = (perms.enabledPaymentMethods || []).map(m => `<span class="bg-[#00ff88]/20 border border-[#00ff88]/40 text-[#00ff88] px-2 py-1 rounded text-[10px] font-black tracking-widest uppercase">${m}</span>`).join('');
@@ -2992,7 +2998,7 @@
       }
   };
 
-    window.adminSendMail = function() {
+    window.adminSendMail = async function() {
       const target = document.getElementById('mail-target').value;
       const specificId = document.getElementById('mail-target-specific').value.trim();
       const subject = sanitizeForBtoa(document.getElementById('mail-subject').value.trim());
@@ -3000,124 +3006,114 @@
 
       if(!subject || !body) return addToast('Subject and Message are required.', 'error');
       if(target === 'SPECIFIC' && !specificId) return addToast('Please specify a target user email or ID.', 'error');
-      // Dispatch via SystemMail API logic
+
       let finalTarget = target;
-      if(target === 'SPECIFIC') {
-          const users = Auth.getUsers() || [];
-          const matchedUser = users.find(u => (u.email && u.email.toLowerCase() === specificId.toLowerCase()) || u.id === specificId || (u.username && u.username.toLowerCase() === specificId.toLowerCase()));
-          if(matchedUser) {
+      if (target === 'SPECIFIC') {
+          try {
+              // Ask backend to resolve user by email/username/id so we don't rely on localStorage
+              const q = encodeURIComponent(specificId);
+              const uRes = await apiFetch(`/api/users?query=${q}`);
+              if (!uRes.success) return addToast(uRes.error || `User ${specificId} not found.`, 'error');
+              const users = Array.isArray(uRes.data) ? uRes.data : (uRes.data.users || []);
+              const matchedUser = users.find(u => (u.email && u.email.toLowerCase() === specificId.toLowerCase()) || u.id === specificId || (u.username && u.username.toLowerCase() === specificId.toLowerCase()));
+              if (!matchedUser) return addToast(`User ${specificId} not found.`, 'error');
               finalTarget = matchedUser.id;
-          } else {
-              return addToast(`User ${specificId} not found in database.`, 'error');
+          } catch (e) {
+              console.error('User lookup failed', e);
+              return addToast('Failed to resolve target user.', 'error');
           }
       }
-      
-      if (!adminState.mail) adminState.mail = [];
-      adminState.mail.unshift({ 
-          id: 'msg_' + Date.now() + Math.random().toString(36).substr(2,5),
-          userId: finalTarget, 
-          sender: `Administrator (${currentAdmin.username})`, 
-          subject: subject, 
-          message: body, 
-          date: new Date().toISOString(), 
-          read: false 
-      });
-      saveStoreState(adminState);
 
-      addToast('Encrypted transmission dispatched successfully.', 'success');
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Dispatched Mail: ${subject}`, null, `Target: ${finalTarget}`);
-      
-      document.getElementById('mail-subject').value = '';
-      document.getElementById('mail-body').value = '';
-      if(target === 'SPECIFIC') document.getElementById('mail-target-specific').value = '';
+      try {
+          const payload = {
+              target: finalTarget, // 'ALL','PREMIUM','AFFILIATES' or user id
+              subject,
+              message: body
+          };
+
+          const res = await apiFetch('/api/mailbox/send', { method: 'POST', body: JSON.stringify(payload) });
+          if (!res.success) {
+              throw new Error(res.error || 'Failed to dispatch mail');
+          }
+
+          addToast('Encrypted transmission dispatched successfully.', 'success');
+          Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Dispatched Mail: ${subject}`, null, `Target: ${finalTarget}`);
+
+          document.getElementById('mail-subject').value = '';
+          document.getElementById('mail-body').value = '';
+          if(target === 'SPECIFIC') document.getElementById('mail-target-specific').value = '';
+      } catch (err) {
+          console.error('adminSendMail error', err);
+          addToast(err.message || 'Unable to send message via backend.', 'error');
+      }
   };
 
   window.adminRenderReviews = async function() {
       const tbody = document.getElementById('reviews-table-body');
-      let komerzaReviews = [];
-      
       try {
-         const STORE_ID = await window.getKomerzaStoreId();
-         if(STORE_ID) {
-             const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/reviews?PageSize=100`, { 
-                 headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' } 
-             });
-             if(res.ok) {
-                 const data = await res.json();
-                 komerzaReviews = data.data || [];
-             }
-         }
-      } catch(e) { console.warn("Komerza Reviews Offline", e); }
-
-      const localReviews = adminState.reviews || [];
-      
-      const formattedKomerza = komerzaReviews.map(r => ({
-          id: r.id, 
-          userId: r.customerId || 'komerza_sync',
-          username: r.customerEmail || 'Komerza User', 
-          rating: r.rating, 
-          title: r.productName || 'Purchase Review',
-          comment: r.reason,
-          verified: true, 
-          dateSubmitted: r.dateCreated,
-          adminReply: r.reply ? { name: 'Admin', reply: r.reply, date: r.repliedAt } : null
-      }));
-
-      // Merge arrays. Local reviews hold the replies to Komerza reviews.
-      // We will prefer the local review object if the ID matches to keep the adminReply intact.
-      const mergedReviews = [];
-      const allReviewsCombined = [...localReviews, ...formattedKomerza];
-      const seenIds = new Set();
-      
-      // Sort newest first to process local overlay overrides correctly
-      allReviewsCombined.sort((a,b) => new Date(b.dateSubmitted || 0).getTime() - new Date(a.dateSubmitted || 0).getTime());
-
-      for (let r of allReviewsCombined) {
-          if (!seenIds.has(r.id)) {
-              seenIds.add(r.id);
-              mergedReviews.push(r);
+          const STORE_ID = await window.getKomerzaStoreId();
+          const query = STORE_ID ? `?storeId=${STORE_ID}&PageSize=100` : '?PageSize=100';
+          const res = await apiFetch(`/api/reviews${query}`);
+          if (!res.success) {
+              tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-zinc-600 font-serif italic border-b border-white/5">Failed to load reviews: ${res.error}</td></tr>`;
+              return;
           }
-      }
 
-      if(mergedReviews.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-zinc-600 font-serif italic border-b border-white/5">No reviews recorded.</td></tr>`;
-          return;
-      }
+          // Expecting res.data to be array of reviews or an object containing reviews
+          const reviews = Array.isArray(res.data) ? res.data : (res.data.reviews || res.data.items || []);
 
-      tbody.innerHTML = mergedReviews.map(r => {
-          const stars = Array(r.rating).fill('<i data-lucide="star" class="w-3 h-3 fill-current text-yellow-500"></i>').join('');
-          const hasReply = r.adminReply !== null;
-          
-          return `
-              <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                  <td class="py-4 pl-8">
-                      <div class="font-bold tracking-wide text-white">${r.username}</div>
-                      ${r.verified ? `<div class="text-[9px] text-[#00ff88] uppercase tracking-widest mt-0.5"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Verified</div>` : ''}
-                  </td>
-                  <td class="py-4 flex gap-0.5 mt-2">${stars}</td>
-                  <td class="py-4 max-w-[300px]">
-                      <div class="font-bold text-white text-xs truncate" title="${r.title}">${r.title}</div>
-                      <div class="text-[10px] text-zinc-400 font-serif italic truncate" title="${r.comment}">"${r.comment}"</div>
-                  </td>
-                  <td class="py-4 text-[10px] text-zinc-500 uppercase tracking-widest">${new Date(r.dateSubmitted).toLocaleDateString()}</td>
-                  <td class="py-4">
-                      ${hasReply 
-                          ? `<span class="bg-[#00ff88]/10 text-[#00ff88] px-2 py-0.5 rounded border border-[#00ff88]/20 text-[9px] font-bold uppercase tracking-widest"><i data-lucide="check" class="w-2 h-2 inline"></i> Replied</span>` 
-                          : `<span class="bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 text-[9px] font-bold uppercase tracking-widest">Pending</span>`
-                      }
-                  </td>
-                  <td class="py-4 pr-8 text-right flex justify-end gap-2">
-                      <button onclick="adminOpenReviewReply('${r.id}', \`${r.comment.replace(/'/g, "\\'")}\`, '${r.userId}', '${r.title.replace(/'/g, "\\'")}', '${r.username.replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-primary/20 hover:bg-primary text-white border-primary/50 rounded border text-[10px] font-bold uppercase tracking-widest transition-all">
-                          <i data-lucide="reply" class="w-3 h-3 inline"></i> Reply
-                      </button>
-                      <button onclick="adminDeleteReview('${r.id}')" class="w-7 h-7 rounded bg-red-950/40 hover:bg-primary border border-red-900/30 text-zinc-400 hover:text-white flex items-center justify-center transition-all">
-                          <i data-lucide="trash-2" class="w-3 h-3"></i>
-                      </button>
-                  </td>
-              </tr>
-          `;
-      }).join('');
-      lucide.createIcons();
+          if (!reviews || reviews.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-zinc-600 font-serif italic border-b border-white/5">No reviews recorded.</td></tr>`;
+              return;
+          }
+
+          tbody.innerHTML = reviews.map(r => {
+              const username = r.user?.username || r.username || r.customerEmail || 'Anonymous';
+              const rating = r.rating || r.stars || 0;
+              const title = r.title || r.productName || r.subject || 'Review';
+              const comment = r.comment || r.reason || r.body || '';
+              const dateSubmitted = r.dateSubmitted || r.dateCreated || r.createdAt || r.created || new Date().toISOString();
+              const adminReply = r.adminReply || r.reply || null;
+
+              const stars = Array(Math.max(0, parseInt(rating,10))).fill('<i data-lucide="star" class="w-3 h-3 fill-current text-yellow-500"></i>').join('');
+              const hasReply = !!adminReply;
+
+              return `
+                  <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                      <td class="py-4 pl-8">
+                          <div class="font-bold tracking-wide text-white">${username}</div>
+                          ${r.verified || r.isVerified ? `<div class="text-[9px] text-[#00ff88] uppercase tracking-widest mt-0.5"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Verified</div>` : ''}
+                      </td>
+                      <td class="py-4 flex gap-0.5 mt-2">${stars}</td>
+                      <td class="py-4 max-w-[300px]">
+                          <div class="font-bold text-white text-xs truncate" title="${title}">${title}</div>
+                          <div class="text-[10px] text-zinc-400 font-serif italic truncate" title="${comment}">"${comment}"</div>
+                      </td>
+                      <td class="py-4 text-[10px] text-zinc-500 uppercase tracking-widest">${new Date(dateSubmitted).toLocaleDateString()}</td>
+                      <td class="py-4">
+                          ${hasReply 
+                              ? `<span class="bg-[#00ff88]/10 text-[#00ff88] px-2 py-0.5 rounded border border-[#00ff88]/20 text-[9px] font-bold uppercase tracking-widest"><i data-lucide="check" class="w-2 h-2 inline"></i> Replied</span>` 
+                              : `<span class="bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 text-[9px] font-bold uppercase tracking-widest">Pending</span>`
+                          }
+                      </td>
+                      <td class="py-4 pr-8 text-right flex justify-end gap-2">
+                          <button onclick="adminOpenReviewReply('${encodeURIComponent(r.id)}', \`${(comment||'').replace(/'/g, "\\'")}\`, '${r.userId || (r.user && r.user.id) || ''}', '${(title||'').replace(/'/g, "\\'")}', '${(username||'').replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-primary/20 hover:bg-primary text-white border-primary/50 rounded border text-[10px] font-bold uppercase tracking-widest transition-all">
+                              <i data-lucide="reply" class="w-3 h-3 inline"></i> Reply
+                          </button>
+                          <button onclick="adminDeleteReview('${encodeURIComponent(r.id)}')" class="w-7 h-7 rounded bg-red-950/40 hover:bg-primary border border-red-900/30 text-zinc-400 hover:text-white flex items-center justify-center transition-all">
+                              <i data-lucide="trash-2" class="w-3 h-3"></i>
+                          </button>
+                      </td>
+                  </tr>
+              `;
+          }).join('');
+
+          lucide.createIcons();
+      } catch (err) {
+          console.error('adminRenderReviews error', err);
+          const tbody = document.getElementById('reviews-table-body');
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-zinc-600 font-serif italic border-b border-white/5">Unable to load reviews.</td></tr>`;
+      }
   };
 
   // Keep modal HTML outside the function scope so it persists
@@ -3170,77 +3166,45 @@
       document.getElementById('review-reply-modal').classList.add('hidden');
   };
 
-  window.adminSubmitReviewReply = function() {
-      const reviewId = document.getElementById('reply-review-id').value;
-      const userId = document.getElementById('reply-user-id').value;
-      const productName = document.getElementById('reply-product-name').value;
-      const username = document.getElementById('reply-user-name').value;
-      const originalText = document.getElementById('reply-original-text').value;
+  window.adminSubmitReviewReply = async function() {
+      const reviewId = decodeURIComponent(document.getElementById('reply-review-id').value || '');
       const replyText = sanitizeForBtoa(document.getElementById('reply-body').value.trim());
 
       if(!replyText) return addToast('Reply message cannot be empty.', 'error');
 
-      // Save reply to local DB (acts as overlay for Komerza reviews)
-      let reviewIndex = adminState.reviews.findIndex(r => r.id === reviewId);
-      
-      if(reviewIndex === -1) {
-          // It's a Komerza API review that hasn't been saved locally yet. Create an overlay shadow copy.
-          adminState.reviews.push({
-              id: reviewId,
-              userId: userId,
-              username: username,
-              title: productName,
-              comment: originalText,
-              rating: 5, // We don't have exact rating here, but it's fine for overlay
-              verified: true,
-              dateSubmitted: new Date().toISOString(),
-              adminReply: {
-                  name: `Administrator (${currentAdmin.username})`,
-                  reply: replyText,
-                  date: new Date().toISOString()
-              }
-          });
-      } else {
-          adminState.reviews[reviewIndex].adminReply = {
-              name: `Administrator (${currentAdmin.username})`,
-              reply: replyText,
-              date: new Date().toISOString()
-          };
+      try {
+          // Send reply to backend; backend will persist reply and notify user via mailbox/email
+          const res = await apiFetch(`/api/reviews/${encodeURIComponent(reviewId)}/reply`, { method: 'POST', body: JSON.stringify({ reply: replyText }) });
+          if (!res.success) throw new Error(res.error || 'Failed to publish reply');
+
+          closeReviewReplyModal();
+          await adminRenderReviews();
+          addToast('Reply published successfully!', 'success');
+          Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Replied to Review`, null, `Review ID: ${reviewId}`);
+      } catch (err) {
+          console.error('adminSubmitReviewReply error', err);
+          addToast(err.message || 'Unable to publish reply via backend.', 'error');
       }
-
-      saveStoreState(adminState);
-
-      // Send Mailbox Notification!
-      if (!adminState.mail) adminState.mail = [];
-      adminState.mail.unshift({
-          id: 'msg_' + Date.now() + Math.random().toString(36).substr(2,5),
-          userId: userId,
-          subject: 'Reply to Your Review',
-          message: `Hello,\n\nAn administrator has replied to your review regarding ${productName}.\n\nYour Review:\n"${originalText}"\n\nAdministrator Reply:\n"${replyText}"\n\nThank you for your feedback.`,
-          sender: 'System Protocol',
-          date: new Date().toISOString(),
-          read: false
-      });
-      saveStoreState(adminState);
-
-      closeReviewReplyModal();
-      adminRenderReviews();
-      addToast('Reply published successfully!', 'success');
-      Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Replied to Review`, null, `Review ID: ${reviewId}`);
   };
 
   window.adminDeleteReview = function(reviewId) {
       openConfirmModal(
           'Delete Review',
-          'Are you sure you want to delete this review? (Komerza API reviews can only be deleted visually from the local database)',
+          'Are you sure you want to delete this review? This will be deleted via the backend and cannot be undone.',
           false,
           null,
-          () => {
-              adminState.reviews = adminState.reviews.filter(r => r.id !== reviewId);
-              saveStoreState(adminState);
-              adminRenderReviews();
-              addToast('Review deleted successfully.', 'success');
-              Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Deleted Review`, reviewId, null);
+          async () => {
+              try {
+                  const res = await apiFetch(`/api/reviews/${encodeURIComponent(decodeURIComponent(reviewId))}`, { method: 'DELETE' });
+                  if (!res.success) throw new Error(res.error || 'Failed to delete review');
+
+                  await adminRenderReviews();
+                  addToast('Review deleted successfully.', 'success');
+                  Auth.logAudit(currentAdmin.username, currentAdmin.discordId, `Deleted Review`, reviewId, null);
+              } catch (err) {
+                  console.error('adminDeleteReview (backend) error', err);
+                  addToast(err.message || 'Unable to delete review via backend.', 'error');
+              }
           }
       );
   };
@@ -3248,3 +3212,6 @@
   </script>
 </body>
 </html>
+
+
+

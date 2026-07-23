@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const config = require('../config');
 
 function signAccessToken(payload) {
@@ -18,3 +18,4 @@ function verifyRefreshToken(token) {
 }
 
 module.exports = { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken };
+

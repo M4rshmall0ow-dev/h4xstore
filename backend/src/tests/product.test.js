@@ -1,4 +1,4 @@
-const request = require('supertest');
+﻿const request = require('supertest');
 const app = require('../server');
 
 const random = () => Math.random().toString(36).slice(2, 8);
@@ -60,3 +60,4 @@ describe('Products API', () => {
     expect([200, 404]).toContain(get.statusCode);
   });
 });
+

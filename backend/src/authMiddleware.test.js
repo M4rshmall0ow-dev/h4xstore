@@ -1,4 +1,4 @@
-const { requirePermission } = require('./middleware/authMiddleware');
+﻿const { requirePermission } = require('./middleware/authMiddleware');
 
 describe('requirePermission middleware', () => {
   test('returns 401 when no user', () => {
@@ -39,3 +39,4 @@ describe('requirePermission middleware', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });
+

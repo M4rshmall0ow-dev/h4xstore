@@ -1,4 +1,4 @@
-const { z } = require('zod');
+﻿const { z } = require('zod');
 
 const ImageSchema = z.object({
   url: z.string().url(),
@@ -39,3 +39,4 @@ module.exports = {
   VariantCreateSchema,
   VariantUpdateSchema
 };
+

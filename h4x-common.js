@@ -1,4 +1,4 @@
-const H4X = {
+﻿const H4X = {
   STORAGE_KEYS: {
     cart: 'h4xstore_cart',
     wishlist: 'h4xstore_wishlist',
@@ -22,7 +22,7 @@ const H4X = {
     const toast = document.createElement('div');
     toast.className = `flex items-center gap-3 px-5 py-4 rounded-2xl border transition-transform duration-300 shadow-xl max-w-md text-sm font-semibold ${type === 'success' ? 'bg-[#081009] border-[#00ff88]/30 text-white' : type === 'error' ? 'bg-[#220202] border-[#ff4d4d]/30 text-white' : type === 'warning' ? 'bg-[#241c03] border-[#fbbf24]/30 text-white' : 'bg-[#08101d] border-white/10 text-white'}`;
     toast.innerHTML = `
-      <span class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-xl">${type === 'success' ? '✓' : type === 'error' ? '!' : type === 'warning' ? '!' : '•'}</span>
+      <span class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-xl">${type === 'success' ? 'âœ“' : type === 'error' ? '!' : type === 'warning' ? '!' : 'â€¢'}</span>
       <span>${message}</span>
     `;
     container.appendChild(toast);
@@ -35,26 +35,26 @@ const H4X = {
 
   loadCart() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.cart) || '[]');
+      return JSON.parse(sessionStorage.getItem(this.STORAGE_KEYS.cart) || '[]');
     } catch (err) {
       return [];
     }
   },
 
   saveCart(cart) {
-    localStorage.setItem(this.STORAGE_KEYS.cart, JSON.stringify(cart));
+    sessionStorage.setItem(this.STORAGE_KEYS.cart, JSON.stringify(cart));
   },
 
   loadWishlist() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.wishlist) || '[]');
+      return JSON.parse(sessionStorage.getItem(this.STORAGE_KEYS.wishlist) || '[]');
     } catch (err) {
       return [];
     }
   },
 
   saveWishlist(wishlist) {
-    localStorage.setItem(this.STORAGE_KEYS.wishlist, JSON.stringify(wishlist));
+    sessionStorage.setItem(this.STORAGE_KEYS.wishlist, JSON.stringify(wishlist));
   },
 
   toggleWishlist(id) {
@@ -90,7 +90,7 @@ const H4X = {
 
   loadRecentSearches() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.recentSearches) || '[]');
+      return JSON.parse(sessionStorage.getItem(this.STORAGE_KEYS.recentSearches) || '[]');
     } catch (err) {
       return [];
     }
@@ -103,12 +103,12 @@ const H4X = {
     if (!normalized) return;
     const unique = searches.filter(item => item.toLowerCase() !== normalized.toLowerCase());
     unique.unshift(normalized);
-    localStorage.setItem(this.STORAGE_KEYS.recentSearches, JSON.stringify(unique.slice(0, 8)));
+    sessionStorage.setItem(this.STORAGE_KEYS.recentSearches, JSON.stringify(unique.slice(0, 8)));
   },
 
   loadRecentViews() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.recentViews) || '[]');
+      return JSON.parse(sessionStorage.getItem(this.STORAGE_KEYS.recentViews) || '[]');
     } catch (err) {
       return [];
     }
@@ -119,7 +119,7 @@ const H4X = {
     const views = this.loadRecentViews();
     const unique = views.filter(item => item !== id);
     unique.unshift(id);
-    localStorage.setItem(this.STORAGE_KEYS.recentViews, JSON.stringify(unique.slice(0, 8)));
+    sessionStorage.setItem(this.STORAGE_KEYS.recentViews, JSON.stringify(unique.slice(0, 8)));
   },
 
   getQueryParam(name) {
@@ -153,13 +153,13 @@ const H4X = {
     return Array.from({ length: 5 }, (_, index) => {
       const star = document.createElement('i');
       star.className = 'w-4 h-4 text-yellow-400';
-      star.innerHTML = index < rating ? '★' : '☆';
+      star.innerHTML = index < rating ? 'â˜…' : 'â˜†';
       return star;
     });
   },
 
   createRatingHtml(rating) {
-    return Array.from({ length: 5 }, (_, index) => `<span class="inline-block w-3 h-3 leading-3 text-yellow-400">${index < rating ? '★' : '☆'}</span>`).join('');
+    return Array.from({ length: 5 }, (_, index) => `<span class="inline-block w-3 h-3 leading-3 text-yellow-400">${index < rating ? 'â˜…' : 'â˜†'}</span>`).join('');
   },
 
   interpolatePercentage(from, to, duration = 600) {
@@ -201,7 +201,7 @@ const H4X = {
             <span class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white text-base font-bold">${p.name.charAt(0)}</span>
             <div>
               <div class="font-semibold text-white">${p.name}</div>
-              <div class="text-xs text-zinc-400">${p.category} · ${this.formatPrice(p.price)}</div>
+              <div class="text-xs text-zinc-400">${p.category} Â· ${this.formatPrice(p.price)}</div>
             </div>
           </button>
         `).join('');

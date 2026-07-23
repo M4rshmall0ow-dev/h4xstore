@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const komerzaService = require('../services/komerzaService');
 const prisma = require('../database/prismaClient');
@@ -53,3 +53,4 @@ router.post('/komerza', express.raw({ type: 'application/json' }), (req, res, ne
 });
 
 module.exports = router;
+

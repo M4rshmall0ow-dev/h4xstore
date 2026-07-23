@@ -1,4 +1,4 @@
-const request = require('supertest');
+﻿const request = require('supertest');
 
 // Ensure test env uses prisma stub
 process.env.NODE_ENV = 'test';
@@ -31,3 +31,4 @@ describe('Komerza webhook', () => {
     expect(res2.body.status).toBe('ignored');
   });
 });
+

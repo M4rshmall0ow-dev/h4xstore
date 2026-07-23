@@ -9,8 +9,10 @@
       const params = new URLSearchParams(window.location.search);
       const ref = params.get('ref');
       if (ref) {
-        localStorage.setItem('h4x_affiliate_ref', ref);
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
       }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
     })();
   </script>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; img-src 'self' data: https:;">
@@ -111,7 +113,7 @@
 <script>
   lucide.createIcons();
 
-  document.getElementById('registerForm').addEventListener('submit', function(e) {
+  document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const userVal = document.getElementById('reg-username').value.trim();
@@ -123,7 +125,7 @@
       return;
     }
 
-    const result = Auth.register(userVal, passVal);
+    const result = await Auth.register(userVal, passVal);
     
     if (result.success) {
       const params = new URLSearchParams(window.location.search);

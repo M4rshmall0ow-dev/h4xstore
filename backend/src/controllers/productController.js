@@ -1,4 +1,4 @@
-const prisma = require('../database/prismaClient');
+﻿const prisma = require('../database/prismaClient');
 const auditService = require('../services/auditService');
 const productService = require('../services/productService');
 const { ProductCreateSchema, ProductUpdateSchema } = require('../validation/productSchemas');

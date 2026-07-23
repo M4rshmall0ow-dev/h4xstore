@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -30,27 +30,33 @@
         return;
       }
 // 2. Fetch the user's real data securely from Discord's API
-      fetch('https://discord.com/api/users/@me', {
-        headers: { authorization: `${tokenType} ${accessToken}` }
-      })
-      .then(result => result.json())
-      .then(response => {
-        // 3. Send their real data to your auth.js database
-        const result = Auth.handleDiscordUser(response);
-        
-        // 4. SMART ROUTING: Check Admin FIRST!
-        const user = result.user;
-        if (user.role === 'admin') {
-          window.location.href = 'H4xShopAdmin.html';
-        } else if (user.ownsKey) {
-          window.location.href = 'Dashboard.html';
-        } else if (user.isAffiliate) {
-          window.location.href = 'AffiliateDashboard.html';
-        } else {
-          window.location.href = 'index.html';
+      // Send the OAuth token to the backend to let the server validate and fetch user data securely
+      (async () => {
+        try {
+          const result = await apiFetch('/api/auth/oauth/discord', { method: 'POST', body: JSON.stringify({ accessToken, tokenType }) });
+          if (!result.success) {
+            alert(result.error || 'Discord authentication failed.');
+            window.location.href = 'Login.html';
+            return;
+          }
+
+          const user = result.data.user || result.data;
+          // Backend is authoritative for role and ownership
+          if (user.role === 'admin') {
+            window.location.href = 'H4xShopAdmin.html';
+          } else if (user.ownsKey) {
+            window.location.href = 'Dashboard.html';
+          } else if (user.isAffiliate) {
+            window.location.href = 'AffiliateDashboard.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Discord authentication failed.');
+          window.location.href = 'Login.html';
         }
-      })
-      .catch(console.error);
+      })();
     };
   </script>
 </body>

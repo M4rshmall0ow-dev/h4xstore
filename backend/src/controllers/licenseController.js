@@ -1,4 +1,4 @@
-const prisma = require('../database/prismaClient');
+﻿const prisma = require('../database/prismaClient');
 const licenseService = require('../services/licenseService');
 const { z } = require('zod');
 
@@ -38,3 +38,4 @@ async function revokeKey(req, res, next) {
 }
 
 module.exports = { importKeys, listKeys, revokeKey };
+

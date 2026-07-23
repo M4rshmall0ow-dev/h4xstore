@@ -1,15 +1,26 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
   <script src="auth.js"></script>
   <script src="store-state.js"></script>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
+      }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
+    })();
+  </script>
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium Checkout</title>
   
   <!-- PATCHED CSP: Allows API Calls directly to Komerza backend securely -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +30,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- KOMERZA EMBED SDK -->
-  <script src="https://checkout.komerza.com/embed/embed.iife.js" defer></script>
   
   <script>
     tailwind.config = {
@@ -141,13 +151,7 @@
             Checkout
           </button>
           
-          <!-- FALLBACK REDIRECT (Appears if modal fails) -->
-          <div id="fallback-container" class="hidden mt-6 text-center animate-pop-in">
-            <p class="text-xs text-zinc-400 font-sans mb-2">Modal blocked by browser?</p>
-            <button id="fallback-btn" class="text-primary hover:text-white text-xs font-bold uppercase tracking-widest underline underline-offset-4 transition-colors">
-              Click here to pay directly
-            </button>
-          </div>
+            <!-- No direct gateway fallback; secure checkout is handled by backend only -->
         </div>
       </div>
       
@@ -173,10 +177,10 @@
     lucide.createIcons();
 
     let checkoutCart = [];
-    let appliedCoupon = localStorage.getItem('h4xstore_checkout_coupon') || "";
+    let appliedCoupon = sessionStorage.getItem('h4xstore_checkout_coupon') || "";
 
     try {
-      const savedCart = localStorage.getItem('h4xstore_checkout_cart');
+      const savedCart = sessionStorage.getItem('h4xstore_checkout_cart');
       if (savedCart) checkoutCart = JSON.parse(savedCart);
     } catch(e) {}
 
@@ -230,7 +234,7 @@
         appliedCoupon = document.getElementById('checkout-promo-input').value.trim().toUpperCase();
         
         if(appliedCoupon) {
-            localStorage.setItem('h4xstore_checkout_coupon', appliedCoupon);
+            sessionStorage.setItem('h4xstore_checkout_coupon', appliedCoupon);
             const btn = document.getElementById('checkout-apply-promo');
             btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-[#00ff88]"></i>';
             btn.classList.add('border-[#00ff88]', 'text-[#00ff88]');
@@ -243,7 +247,7 @@
                 btn.classList.remove('border-[#00ff88]', 'text-[#00ff88]');
             }, 2000);
         } else {
-            localStorage.removeItem('h4xstore_checkout_coupon');
+            sessionStorage.removeItem('h4xstore_checkout_coupon');
             renderCheckout();
         }
     });
@@ -278,34 +282,14 @@
     }
 
     const submitBtn = document.getElementById('confirm-btn');
-    const fallbackBtn = document.getElementById('fallback-btn');
-    const fallbackContainer = document.getElementById('fallback-container');
+    // Secure checkout is backend-managed; no direct Komerza fallback URL is exposed from the browser.
 
-    function getFallbackUrl() {
-        const firstItem = checkoutCart[0] || { name: 'Lifetime Key', quantity: 1 };
-        const mappedData = resolveKomerzaIDs(firstItem);
-        let fbUrl = `https://checkout.komerza.com/product/${mappedData.p}/${mappedData.v}?qty=${firstItem.quantity || 1}`;
-        const emailInput = document.getElementById('user-email').value;
-        
-        if (emailInput) fbUrl += `&email=${encodeURIComponent(emailInput)}`;
-        if (appliedCoupon) fbUrl += `&coupon=${encodeURIComponent(appliedCoupon)}`;
-        
-        // BUG FIX: Inject Affiliate Ref into Fallback URL
-        const savedRef = localStorage.getItem('h4xstore_affiliate_ref');
-        if (savedRef) fbUrl += `&ref=${encodeURIComponent(savedRef)}`;
-
-        return fbUrl;
-    }
-
-    fallbackBtn.addEventListener('click', () => {
-        window.location.href = getFallbackUrl();
-    });
 
     submitBtn.addEventListener('click', async function(e) {
       e.preventDefault();
-      
+
       const emailInput = document.getElementById('user-email').value;
-      if(!emailInput || !emailInput.includes('@')) {
+      if (!emailInput || !emailInput.includes('@')) {
           alert("Please enter a valid email address so we can deliver your keys!");
           return;
       }
@@ -314,74 +298,68 @@
       this.disabled = true;
       this.classList.add('cursor-wait');
       
-      this.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin text-white"></i> <span class="text-sm">Connecting to Komerza...</span>';
+      this.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin text-white"></i> <span class="text-sm">Starting secure checkout...</span>';
       lucide.createIcons();
 
       const currentUser = Auth.getCurrentUser();
       if (currentUser) {
-          currentUser.checkoutEmail = emailInput;
-          Auth.setSession(currentUser);
-          
-          const usersList = Auth.getUsers();
-          const userIndex = usersList.findIndex(u => u.id === currentUser.id);
-          if (userIndex > -1) {
-              usersList[userIndex].checkoutEmail = emailInput;
-              Auth.saveUsers(usersList);
-          }
+          // Keep the current auth token intact; do not persist checkout-only email state in localStorage.
       }
 
-      const validItems = [];
-      checkoutCart.forEach(item => {
-         const mappedData = resolveKomerzaIDs(item);
-         if (mappedData && mappedData.p && mappedData.v) {
-            validItems.push({
-               productId: String(mappedData.p), 
-               variantId: String(mappedData.v),
-               quantity: Number(item.quantity) || 1
-            });
-         }
-      });
+      const orderItems = checkoutCart.map(item => ({
+        productId: String(item.id),
+        quantity: Number(item.quantity) || 1,
+        name: item.name
+      }));
 
-      localStorage.setItem('checkout_initiated', 'true');
+      if (!orderItems.length) {
+          alert('Your cart is empty.');
+          this.disabled = false;
+          this.classList.remove('cursor-wait');
+          this.innerHTML = 'Open Secure Checkout';
+          return;
+      }
 
-      const komerzaOptions = {
-          items: validItems,
-          theme: 'dark'
+      sessionStorage.setItem('checkout_initiated', 'true');
+
+      const payload = {
+          items: orderItems,
+          currency: 'USD',
+          couponCode: appliedCoupon || undefined,
+          customerEmail: emailInput
       };
 
-      if (emailInput) komerzaOptions.email = emailInput;
-      if (appliedCoupon) komerzaOptions.couponCode = appliedCoupon;
-
-      // BUG FIX: Inject Affiliate Ref into Komerza Embed SDK
-      const savedRef = localStorage.getItem('h4xstore_affiliate_ref');
+      const savedRef = sessionStorage.getItem('h4x_affiliate_ref');
       if (savedRef) {
-          komerzaOptions.ref = savedRef; 
-      }
-
-      if (window.location.protocol === 'https:') {
-          const currentUrlBase = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-          komerzaOptions.returnUrl = currentUrlBase + '/Success.html';
+          payload.affiliateRef = savedRef;
       }
 
       try {
-          if (window.Komerza) {
-              window.Komerza.init(); 
-              window.Komerza.open(komerzaOptions);
-              
-              fallbackContainer.classList.remove('hidden');
-              
-              setTimeout(() => {
-                  submitBtn.disabled = false;
-                  submitBtn.classList.remove('cursor-wait');
-                  submitBtn.innerHTML = 'Open Secure Checkout';
-              }, 3000);
-          } else {
-              throw new Error("SDK not loaded");
+          const result = await apiFetch('/api/orders', {
+              method: 'POST',
+              body: JSON.stringify(payload)
+          });
+
+          if (!result.success) {
+              throw new Error(result.error || 'Checkout could not be started.');
           }
+
+          const checkoutUrl = result.data?.checkout?.checkoutUrl || result.data?.checkout?.url;
+          if (!checkoutUrl) {
+              throw new Error('No checkout URL returned from the backend.');
+          }
+
+          window.location.href = checkoutUrl;
       } catch (err) {
-          window.location.href = getFallbackUrl();
+          console.error(err);
+          this.disabled = false;
+          this.classList.remove('cursor-wait');
+          this.innerHTML = 'Open Secure Checkout';
+          alert(err.message || 'Secure checkout failed. Please try again later.');
       }
     });
   </script>
 </body>
 </html>
+
+

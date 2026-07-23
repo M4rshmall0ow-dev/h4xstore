@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/userController');
 const { authRequired, requirePermission } = require('../middleware/authMiddleware');
@@ -17,3 +17,4 @@ router.post('/:id/force-logout', requirePermission('users.forceLogout'), control
 router.post('/:id/reset-password', requirePermission('users.resetPassword'), controller.resetUserPasswordAdmin);
 
 module.exports = router;
+

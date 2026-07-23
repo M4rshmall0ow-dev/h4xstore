@@ -1,4 +1,4 @@
-const uploadService = require('../services/uploadService');
+﻿const uploadService = require('../services/uploadService');
 const { z } = require('zod');
 
 const PresignSchema = z.object({ filename: z.string().min(1), contentType: z.string().optional(), size: z.number().optional(), bucket: z.string().optional() });

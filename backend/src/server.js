@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -15,8 +15,14 @@ const webhooksRoutes = require('./routes/webhooks');
 const licenseRoutes = require('./routes/license');
 const uploadRoutes = require('./routes/uploads');
 const mailRoutes = require('./routes/mailbox');
-const prisma = require('./database/prismaClient');
+const komerzaRoutes = require('./routes/komerza');
 const productsRoutes = require('./routes/products');
+const ordersRoutes = require('./routes/orders');
+const reviewsRoutes = require('./routes/reviews');
+const affiliatesRoutes = require('./routes/affiliates');
+const analyticsRoutes = require('./routes/analytics');
+const partnersRoutes = require('./routes/partners');
+const prisma = require('./database/prismaClient');
 
 const app = express();
 
@@ -36,7 +42,13 @@ app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/license-keys', licenseRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/mailbox', mailRoutes);
+app.use('/api/komerza', komerzaRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/affiliates', affiliatesRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/partners', partnersRoutes);
 
 app.get('/_health', async (req, res) => {
   try {
@@ -59,3 +71,4 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 module.exports = app;
+

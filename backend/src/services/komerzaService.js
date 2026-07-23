@@ -1,9 +1,9 @@
-const crypto = require('crypto');
+﻿const crypto = require('crypto');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 
-/**
+/
  * Mocked createCheckout. In a real integration this would call Komerza API.
  * Returns a checkout URL and a komerzaId (checkout id)
  */
@@ -40,7 +40,7 @@ function verifyWebhookSignature(rawBody, signatureHeader, secret) {
   }
 }
 
-/**
+/
  * Handle webhook payloads from Komerza. Expected shape (example):
  * { id: 'evt_...', type: 'checkout.paid', data: { komerzaId: 'kmz_xxx', amount: '9.99', currency: 'USD', metadata: { orderId } } }
  * The function will return { status: 'ok' } when processed or { status: 'ignored' } when nothing to do.
@@ -69,7 +69,7 @@ async function handleWebhookEvent(payload, prisma) {
           }
         }
       } catch (e) {
-        // If the WebhookEvent table doesn't exist yet or another error occurs, continue — we'll rely on order-level idempotency
+        // If the WebhookEvent table doesn't exist yet or another error occurs, continue â€” we'll rely on order-level idempotency
         logger.warn('WebhookEvent check skipped', e.message || e);
       }
 
@@ -127,3 +127,4 @@ async function handleWebhookEvent(payload, prisma) {
 }
 
 module.exports = { createCheckout, verifyWebhookSignature, handleWebhookEvent };
+

@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+﻿const logger = require('../utils/logger');
 
 // In test environment use an in-memory store so tests can assert messages
 const _store = [];
@@ -58,3 +58,4 @@ function _getSent() { return _store.slice(); }
 function _clearSent() { _store.length = 0; }
 
 module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendMail, _getSent, _clearSent };
+

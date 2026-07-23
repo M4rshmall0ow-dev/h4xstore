@@ -10,8 +10,10 @@
       const params = new URLSearchParams(window.location.search);
       const ref = params.get('ref');
       if (ref) {
-        localStorage.setItem('h4x_affiliate_ref', ref);
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
       }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
     })();
   </script>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; img-src 'self' data: https:;">
@@ -198,20 +200,20 @@
 <script>
   lucide.createIcons();
 
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const userVal = document.getElementById('login-username').value.trim();
     const passVal = document.getElementById('login-password').value;
 
-    const result = Auth.login(userVal, passVal);
+    const result = await Auth.login(userVal, passVal);
 
     if (result.success) {
       const params = new URLSearchParams(window.location.search);
       const redirectTarget = params.get('redirect');
       window.location.href = redirectTarget === 'affiliate' ? 'AffiliateDashboard.html' : 'Dashboard.html';
     } else {
-      alert(result.message); 
+      alert(result.message);
     }
 });
 
@@ -262,12 +264,17 @@ document.getElementById('request-reset-form').addEventListener('submit', (e) => 
     
     if(!activeResetEmail) return alert("Please enter a valid email.");
 
-    const res = Auth.requestPasswordReset(activeResetEmail);
-    alert(res.message); 
-
-    // Visually transition to step 2
-    step1.classList.add('hidden');
-    step2.classList.remove('hidden');
+    Auth.requestPasswordReset(activeResetEmail).then(res => {
+      alert(res.message);
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      document.getElementById('reset-code').value = '';
+      document.getElementById('reset-new-pass').value = '';
+      document.getElementById('reset-confirm-pass').value = '';
+      updateStrengthMeter('');
+    }).catch(() => {
+      alert('Unable to send password reset request.');
+    });
     document.getElementById('reset-code').value = '';
     document.getElementById('reset-new-pass').value = '';
     document.getElementById('reset-confirm-pass').value = '';
@@ -283,14 +290,12 @@ document.getElementById('verify-reset-form').addEventListener('submit', (e) => {
 
     if (newPass !== confirmPass) return alert("Passwords do not match!");
 
-    const res = Auth.verifyAndResetPassword(activeResetEmail, code, newPass);
-
-    if (res.success) {
+    Auth.verifyAndResetPassword(activeResetEmail, code, newPass).then(res => {
         alert(res.message);
-        closeResetModal();
-    } else {
-        alert(res.message);
-    }
+        if (res.success) closeResetModal();
+    }).catch(() => {
+        alert('Unable to reset password at this time.');
+    });
 });
 
 // Real-time Strength Visualizer

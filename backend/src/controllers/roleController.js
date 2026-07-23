@@ -1,4 +1,4 @@
-const prisma = require('../database/prismaClient');
+﻿const prisma = require('../database/prismaClient');
 const { logAudit } = require('../services/auditService');
 
 async function listRoles(req, res, next) {

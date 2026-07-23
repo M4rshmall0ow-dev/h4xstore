@@ -1,4 +1,4 @@
-let prisma;
+﻿let prisma;
 
 if (process.env.NODE_ENV === 'test') {
   // lightweight stub for tests that do not need DB access
@@ -168,3 +168,4 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 module.exports = prisma;
+

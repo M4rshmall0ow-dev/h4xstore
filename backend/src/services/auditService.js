@@ -1,10 +1,10 @@
-const prisma = require('../database/prismaClient');
+﻿const prisma = require('../database/prismaClient');
 
 async function logAudit({ actorId = null, actorType = null, action, meta = {} }) {
   try {
     await prisma.auditLog.create({ data: { actorId, actorType, action, meta } });
   } catch (err) {
-    // Don't throw — audit failures should not break main flow, but log for operators
+    // Don't throw â€” audit failures should not break main flow, but log for operators
     // eslint-disable-next-line no-console
     console.error('Audit log failed', err);
   }

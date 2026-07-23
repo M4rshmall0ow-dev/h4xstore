@@ -10,8 +10,10 @@
       const params = new URLSearchParams(window.location.search);
       const ref = params.get('ref');
       if (ref) {
-        localStorage.setItem('h4x_affiliate_ref', ref);
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
       }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
     })();
   </script>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; img-src 'self' data: https:;">
@@ -444,15 +446,7 @@
         return;
       }
 
-      // 2. Validate current password via Auth.login (Bypasses stripped local state)
-      const loginCheck = Auth.login(user.username, oldPass);
-      if (!loginCheck.success) {
-        alert("Security Alert: The current password you entered is incorrect.");
-        generateCaptcha();
-        return;
-      }
-
-      // 3. New password rules
+      // 2. Validate current password via backend
       if (newPass !== confirmPass) {
         alert("The new passwords do not match.");
         return;
@@ -462,23 +456,19 @@
         return;
       }
 
-      // 4. Secure DB update
-      const allUsers = Auth.getUsers();
-      const dbIndex = allUsers.findIndex(u => u.id === user.id);
-      
-      if (dbIndex > -1) {
-          // Generate fresh salt and hash for maximum security
-          const newSalt = SecurityCore.sha256(Date.now().toString()).substring(0, 16);
-          allUsers[dbIndex].salt = newSalt;
-          allUsers[dbIndex].password = SecurityCore.sha256(newSalt + newPass);
-          
-          Auth.saveUsers(allUsers);
-          alert("Password updated securely!");
+      Auth.changePassword(oldPass, newPass).then(result => {
+        if (result.success) {
+          alert(result.message);
           document.getElementById('security-form').reset();
           generateCaptcha();
-      } else {
-          alert("Fatal Error: Could not locate user vault.");
-      }
+        } else {
+          alert(result.message);
+          generateCaptcha();
+        }
+      }).catch(() => {
+        alert('Unable to update password at this time.');
+        generateCaptcha();
+      });
     });
 
     function renderDiscordState() {

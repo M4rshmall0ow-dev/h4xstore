@@ -212,6 +212,7 @@ id String @id @default(uuid())
 user User? @relation(fields: [userId], references: [id])
 userId String?
 code String @unique
+meta Json?
 clicks AffiliateClick[]
 sales AffiliateSale[]
 withdrawals AffiliateWithdrawal[]
@@ -242,8 +243,12 @@ id String @id @default(uuid())
 affiliate Affiliate @relation(fields: [affiliateId], references: [id])
 affiliateId String
 amount Decimal
+currency String? @default("USD")
+address String?
+reason String?
 status String @default("pending")
 createdAt DateTime @default(now())
+completedAt DateTime?
 }
 
 model Coupon {
@@ -268,6 +273,14 @@ id String @id @default(uuid())
 title String
 body String
 active Boolean @default(true)
+createdAt DateTime @default(now())
+}
+
+model Media {
+id String @id @default(uuid())
+youtubeId String
+title String
+publisher String?
 createdAt DateTime @default(now())
 }
 

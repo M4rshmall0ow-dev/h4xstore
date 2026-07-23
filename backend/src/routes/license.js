@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const licenseController = require('../controllers/licenseController');
 
@@ -7,3 +7,4 @@ router.get('/', licenseController.listKeys);
 router.post('/:id/revoke', licenseController.revokeKey);
 
 module.exports = router;
+

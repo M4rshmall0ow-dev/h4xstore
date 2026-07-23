@@ -1,4 +1,4 @@
-const request = require('supertest');
+﻿const request = require('supertest');
 process.env.NODE_ENV = 'test';
 const app = require('../server');
 
@@ -11,3 +11,4 @@ describe('Upload presign', () => {
     expect(res.body.expiresAt).toBeDefined();
   });
 });
+

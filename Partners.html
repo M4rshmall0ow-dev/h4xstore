@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
@@ -16,6 +16,7 @@
   
   <!-- Centralized State Management -->
   <script src="store-state.js"></script>
+  <script src="auth.js"></script>
 
   <script>
     tailwind.config = {
@@ -145,7 +146,7 @@
   <script>
     let soundEnabled = false;
     const uiAudioNode = new Audio("Chill Piano Electronic Music (For Videos) - Home by Neutrin05.mp3");
-    const easterEggAudioNode = new Audio("Nakano Itsuki Voice Simple [五等分の花嫁] - GTNH.mp3");
+    const easterEggAudioNode = new Audio("Nakano Itsuki Voice Simple [äº”ç­‰åˆ†ã®èŠ±å«] - GTNH.mp3");
 
     function playUiSound() {
       if (!soundEnabled) return;
@@ -204,17 +205,19 @@
         { id: "2", name: "Vanguard Systems", description: "Polymorphic memory engines providing unmatched optimization metrics for premium software frameworks.", logo: "https://cdn.discordapp.com/attachments/1398736879754412074/1525720010645835846/ea6a034b4bfcf0d744e7e9fe2dbf78c5.png", link: "#", isVip: false }
       ];
 
-      // Prioritize fetching from the store-state system directly
-      const state = typeof loadStoreState === 'function' ? loadStoreState() : null;
+      try {
+          const response = await apiFetch('/api/partners?PageSize=100');
+          if (response.success) {
+              partners = Array.isArray(response.data)
+                  ? response.data
+                  : (response.data.partners || response.data.items || []);
+          }
+      } catch (err) {
+          console.warn('Failed to load partners from backend', err);
+      }
 
-      if (state && state.partners && state.partners.length > 0) {
-          partners = state.partners;
-      } else if (localStorage.getItem('h4xstore_partners')) {
-          // Fallback to local storage if state isn't synced
-          partners = JSON.parse(localStorage.getItem('h4xstore_partners'));
-      } else {
+      if (!partners || partners.length === 0) {
           partners = samplePartners;
-          localStorage.setItem('h4xstore_partners', JSON.stringify(samplePartners));
       }
 
       const grid = document.getElementById('partners-grid');

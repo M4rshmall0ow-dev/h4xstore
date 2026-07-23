@@ -1,4 +1,4 @@
-// Presigned upload service: supports Supabase Storage (preferred) and Cloudflare R2 / S3 fallback
+﻿// Presigned upload service: supports Supabase Storage (preferred) and Cloudflare R2 / S3 fallback
 const logger = require('../utils/logger');
 
 function _isTest() { return process.env.NODE_ENV === 'test'; }

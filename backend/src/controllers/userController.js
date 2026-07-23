@@ -1,4 +1,4 @@
-const prisma = require('../database/prismaClient');
+﻿const prisma = require('../database/prismaClient');
 
 async function listUsers(req, res, next) {
   try {
@@ -113,3 +113,4 @@ async function forceLogout(req, res, next) {
 }
 
 module.exports = { listUsers, getUser, patchUser, deleteUser, suspendUser, terminateUser, forceLogout, resetUserPasswordAdmin };
+

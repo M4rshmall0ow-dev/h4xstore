@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+﻿const dotenv = require('dotenv');
 const path = require('path');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -25,3 +25,4 @@ module.exports = {
     callbackUrl: process.env.DISCORD_CALLBACK_URL
   }
 };
+

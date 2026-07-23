@@ -10,11 +10,13 @@
       const params = new URLSearchParams(window.location.search);
       const ref = params.get('ref');
       if (ref) {
-        localStorage.setItem('h4x_affiliate_ref', ref);
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
       }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
     })();
   </script>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
   
   <script src="store-state.js"></script>
   <script src="auth.js"></script>
@@ -541,42 +543,35 @@
     let soundEnabled = false;
 
     async function fetchReviews() {
-        const localReviews = window.globalState && window.globalState.reviews ? window.globalState.reviews : [];
-        let komerzaReviews = [];
-        
+        let backendReviews = [];
+        let averageRating = '5.0';
+        let reviewCount = 0;
+
         try {
-           const STORE_ID = await window.getKomerzaStoreId();
-           const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/reviews?PageSize=100`, { 
-               headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' } 
-           });
-           if(res.ok) {
-               const data = await res.json();
-               komerzaReviews = data.data || [];
-           }
-        } catch(e) { console.warn("Komerza Reviews Offline", e); }
+            const result = await apiFetch('/api/reviews?perPage=100');
+            if (result.success && result.data) {
+                backendReviews = result.data.reviews || [];
+                averageRating = result.data.summary?.averageRating || averageRating;
+                reviewCount = result.data.summary?.total || backendReviews.length;
+            }
+        } catch (e) {
+            console.warn('Review backend fetch failed', e);
+        }
 
         // Sanitize & Merge APIs
-        const formattedKomerza = komerzaReviews.map(r => ({
-            id: r.id, 
-            username: r.customerEmail ? r.customerEmail.split('@')[0] : 'Verified Buyer', 
-            rating: r.rating, 
-            title: r.productName || 'Purchase Review',
-            comment: r.reason,
-            verified: true, 
-            dateSubmitted: r.dateCreated,
-            adminReply: r.reply ? { name: 'Admin', reply: r.reply, date: r.repliedAt } : null
+        const allReviews = backendReviews.map(r => ({
+            id: r.id,
+            username: r.username || 'Verified Buyer',
+            rating: r.rating,
+            title: r.title || 'Purchase Review',
+            comment: r.body || '',
+            verified: r.verified,
+            dateSubmitted: r.createdAt,
+            adminReply: r.replies && r.replies.length > 0 ? { name: 'Admin', reply: r.replies[0].body, date: r.replies[0].createdAt } : null
         }));
 
-        const allReviews = [...localReviews, ...formattedKomerza];
-        
-        // Sort Newest First
-        allReviews.sort((a,b) => new Date(b.dateSubmitted || 0) - new Date(a.dateSubmitted || 0));
-
-        // Math: Calculate True Average Rating
-        let totalScore = 0;
-        allReviews.forEach(r => totalScore += parseInt(r.rating));
-        const avg = allReviews.length > 0 ? (totalScore / allReviews.length).toFixed(1) : "5.0";
-        const count = allReviews.length > 0 ? allReviews.length : "1,204"; // Fallback to 1204 if strictly 0 reviews for aesthetic
+        const avg = Number(averageRating).toFixed(1);
+        const count = reviewCount || (allReviews.length > 0 ? allReviews.length : 1204);
 
         document.getElementById('stars-container').innerHTML = Array(Math.round(avg)).fill('<i data-lucide="star" class="w-8 h-8 fill-current text-primary drop-shadow-[0_0_8px_currentColor]"></i>').join('');
         document.getElementById('review-average-text').innerHTML = `<span class="text-white font-bold">${avg}/5</span> Average rating based on <span class="text-white font-bold">${count}</span> verified reviews`;
@@ -628,89 +623,28 @@
     // Fetch Live Products from Komerza API using the Store ID dynamically
     async function fetchLiveProducts() {
         try {
-            const STORE_ID = await window.getKomerzaStoreId();
-            if (!STORE_ID) throw new Error("Could not fetch Store ID");
+            const result = await apiFetch('/api/products?visible=true&perPage=100');
+            if (!result.success) throw new Error(result.error || 'Failed to load products');
 
-            // Correct endpoint as per the OpenAPI docs
-            const response = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products/all`, {
-                headers: {
-                    'Authorization': `Bearer ${window.KOMERZA_API_KEY}`,
-                    'User-Agent': 'H4xStore/1.0'
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch from Komerza');
-            
-            const data = await response.json();
-            
-            const existingState = typeof loadStoreState === 'function' ? loadStoreState() : { products: [] };
-            const localProducts = existingState.products || [];
-
-            products = data.data.map(kProd => {
-                const variant = kProd.variants && kProd.variants.length > 0 ? kProd.variants[0] : {};
-                
-                let parsedFeatures = [];
-                const productName = kProd.name.toLowerCase();
-
-                if (productName.includes("lifetime")) {
-                    parsedFeatures = [
-                        "Lifetime Access", "Unlimited Updates", "Works on All Supported Scripts",
-                        "Premium Discord Role", "One-Time Purchase", "Priority Support",
-                        "Exclusive Content", "Early Access to New Features", "Access to Beta Testing",
-                        "Special Recognition in Community"
-                    ];
-                } else if (productName.includes("2 week") || productName.includes("2-week") || productName.includes("14 day") || productName.includes("14-day")) {
-                    parsedFeatures = ["14 Days Access", "Unlimited Updates", "Works on All Supported Scripts", "Buyer Discord Role", "Renew Anytime"];
-                } else if (productName.includes("month") || productName.includes("30 day") || productName.includes("30-day")) {
-                    parsedFeatures = ["30 Days Access", "Unlimited Updates", "Works on All Supported Scripts", "Buyer Discord Role", "Renew Anytime"];
-                } else if (kProd.description && kProd.description.includes("|")) {
-                    parsedFeatures = kProd.description.split("|").map(f => f.trim()).filter(Boolean);
-                } else {
-                    parsedFeatures = ["Instant Delivery", "Premium Discord Role", "Priority Support"];
-                }
-
-                let cat = 'all';
-                if (kProd.name.toLowerCase().includes('lifetime') || kProd.name.toLowerCase().includes('vip')) cat = 'lifetime';
-                if (kProd.name.toLowerCase().includes('month')) cat = 'popular';
-
-                const currentStock = variant.stock !== undefined && variant.stock !== null ? variant.stock : 0;
-
-                let meta = {};
-                try { meta = JSON.parse(variant.metadata || '{}'); } catch(e) {}
-                
-                const localProd = localProducts.find(p => p.komerzaProductId === kProd.id);
-                
-                const isHot = meta.hot !== undefined ? meta.hot : (localProd ? localProd.bestSeller : false);
-                const isSale = meta.sale !== undefined ? meta.sale : (localProd ? localProd.sale : false);
-                const isHidden = meta.hidden !== undefined ? meta.hidden : (localProd ? localProd.hidden : false);
-
-                return {
-                    id: kProd.id, 
-                    name: kProd.name,
-                    price: variant.cost || 0,
-                    komerzaProductId: kProd.id,
-                    komerzaVariantId: variant.id || "",
-                    category: cat,
-                    bestSeller: isHot,
-                    hidden: isHidden,
-                    sale: isSale,
-                    stock: currentStock,
-                    maxStock: variant.maximumQuantity > 0 ? variant.maximumQuantity : Math.max(currentStock, 1000),
-                    features: parsedFeatures,
-                    
-                    variants: [{
-                        id: variant.id || "",
-                        price: variant.cost || 0,
-                        isHot: isHot,
-                        isSale: isSale,
-                        isHidden: isHidden
-                    }]
-                };
-            });
-
-            const state = typeof loadStoreState === 'function' ? loadStoreState() : { products: [] };
-            state.products = products;
-            if(typeof saveStoreState === 'function') saveStoreState(state);
+            products = (result.data.items || []).map(p => ({
+                id: p.id,
+                name: p.name,
+                price: Number(p.price) || 0,
+                category: (p.categories && p.categories.length > 0) ? p.categories[0] : 'all',
+                bestSeller: !!p.featured,
+                hidden: p.visible === false,
+                sale: false,
+                stock: p.inventory?.stock ?? 0,
+                maxStock: p.inventory?.stock > 0 ? p.inventory.stock : 100,
+                features: (p.description ? p.description.split('|').map(f => f.trim()).filter(Boolean) : []),
+                images: p.images || [],
+                variants: (p.variants || []).map(v => ({
+                    id: v.id,
+                    price: Number(v.price) || 0,
+                    stock: typeof v.stock === 'number' ? v.stock : null,
+                    meta: v.meta || {}
+                }))
+            }));
 
             const preloader = document.getElementById('preloader');
             if (preloader) {
@@ -721,11 +655,8 @@
             renderProducts();
 
         } catch (error) {
-            console.error("API Sync Failed, falling back to local state but preventing oversell by defaulting to 0 stock.", error);
-            
-            const cachedProducts = window.globalState ? window.globalState.products || [] : [];
-            products = cachedProducts.map(p => ({ ...p, stock: 0 }));
-            
+            console.error('API Sync Failed, falling back to empty storefront.', error);
+            products = [];
             const preloader = document.getElementById('preloader');
             if (preloader) {
               preloader.style.opacity = '0';
@@ -733,9 +664,9 @@
             }
             renderProducts();
         }
-        
         fetchReviews(); // Trigger Reviews Fetch
     }
+
 
     const MOCK_NAMES = ['Shadow', 'Blaze', 'Ghost', 'Viper', 'Nova', 'Reaper', 'Titan', 'Kraken'];
     const MOCK_ITEMS = ['Lifetime Key', '1 Month Key', '2 Week Key'];
@@ -1114,7 +1045,7 @@
 
       cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
       
-      const savedCoupon = localStorage.getItem('h4xstore_checkout_coupon');
+      const savedCoupon = sessionStorage.getItem('h4xstore_checkout_coupon');
       if (savedCoupon || count >= 5) {
         discountRow.classList.remove('hidden');
         discountRow.innerHTML = `<span class="text-zinc-400 font-sans text-sm">Discounts / Promos</span><span id="cart-discount" class="text-[#00ff88] text-sm font-bold tracking-wider">Calculated at Checkout</span>`;
@@ -1164,12 +1095,12 @@
       const promoInput = document.getElementById('promo-input').value.trim().toUpperCase();
       
       if (promoInput) {
-        localStorage.setItem('h4xstore_checkout_coupon', promoInput);
+        sessionStorage.setItem('h4xstore_checkout_coupon', promoInput);
         updateCartUI();
         addToast(`Cipher '${promoInput}' saved! It will be applied securely at checkout.`);
         playUiSound();
       } else {
-        localStorage.removeItem('h4xstore_checkout_coupon');
+        sessionStorage.removeItem('h4xstore_checkout_coupon');
         updateCartUI();
         addToast('Cipher code cleared.');
         playUiSound();
@@ -1178,7 +1109,7 @@
 
     checkoutBtn.addEventListener('click', () => {
       playUiSound();
-      localStorage.setItem('h4xstore_checkout_cart', JSON.stringify(cart));
+      sessionStorage.setItem('h4xstore_checkout_cart', JSON.stringify(cart));
       window.location.href = 'Checkout.html'; 
     });
 
@@ -1329,16 +1260,12 @@
             const STORE_ID = await window.getKomerzaStoreId();
             if (!STORE_ID) return;
             
-            const res = await fetch(`https://api.komerza.com/stores/${STORE_ID}/products?PageSize=100`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-            });
+            const res = await apiFetch(`/api/products?storeId=${STORE_ID}&PageSize=100`);
             
             // Load local state to apply Hot/Sale/Hide UI flags
             const state = typeof loadStoreState === 'function' ? loadStoreState() : null;
 
-            if (res.ok) {
-                const payload = await res.json();
-                const products = payload.data || [];
+            const products = (res.success && Array.isArray(res.data)) ? res.data : [];
                 
                 // Iterate over all product cards on the storefront
                 document.querySelectorAll('.product-card, .variant-card').forEach(card => {
@@ -1504,3 +1431,6 @@ if (title.includes('lifetime')) {
   </script>
 </body>
 </html>
+
+
+

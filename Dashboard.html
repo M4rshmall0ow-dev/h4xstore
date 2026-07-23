@@ -10,11 +10,13 @@
       const params = new URLSearchParams(window.location.search);
       const ref = params.get('ref');
       if (ref) {
-        localStorage.setItem('h4x_affiliate_ref', ref);
+        sessionStorage.setItem('h4x_affiliate_ref', ref);
       }
+      localStorage.removeItem('h4x_affiliate_ref');
+      localStorage.removeItem('h4xstore_affiliate_ref');
     })();
   </script>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com https://api.komerza.com https://checkout.komerza.com; frame-src https://checkout.komerza.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://checkout.komerza.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com https://discord.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -241,89 +243,100 @@
         }
     };
 
-    window.toggleMailMessage = function(msgId) {
+    window.toggleMailMessage = async function(msgId) {
         const content = document.getElementById(`mail-content-${msgId}`);
         const icon = document.getElementById(`mail-icon-${msgId}`);
-        const state = window.globalState || loadStoreState();
         
         const isHidden = content.classList.contains('hidden');
         if (isHidden) {
             content.classList.remove('hidden');
             icon.classList.add('rotate-180');
             
-            // Mark as read
-            const msg = state.mail.find(m => m.id === msgId);
-            if (msg && !msg.read) {
-                msg.read = true;
-                saveStoreState(state);
-                renderMailbox();
+            // Mark as read via backend
+            try {
+                await apiFetch(`/api/mailbox/${msgId}/read`, { method: 'PATCH' });
+            } catch (err) {
+                console.warn('Failed to mark message as read', err);
             }
+
+            // Refresh mailbox UI
+            await renderMailbox();
         } else {
             content.classList.add('hidden');
             icon.classList.remove('rotate-180');
         }
     };
 
-    window.deleteMail = function(msgId, event) {
+    window.deleteMail = async function(msgId, event) {
         event.stopPropagation();
-        const state = window.globalState || loadStoreState();
-        state.mail = state.mail.filter(m => m.id !== msgId);
-        saveStoreState(state);
-        renderMailbox();
+        try {
+            const res = await apiFetch(`/api/mailbox/${msgId}`, { method: 'DELETE' });
+            if (!res.success) {
+                addToast(res.error || 'Failed to delete message', 'error');
+                return;
+            }
+            await renderMailbox();
+            addToast('Message deleted.', 'success');
+        } catch (err) {
+            console.error('Delete mail error', err);
+            addToast('Unable to delete message.', 'error');
+        }
     };
 
-    function renderMailbox() {
+    async function renderMailbox() {
         const u = Auth.getCurrentUser();
         if(!u) return;
 
-        const state = window.globalState || loadStoreState();
-        const myMail = (state.mail || []).filter(m => 
-            m.userId === u.id || 
-            m.userId === 'ALL' || 
-            (m.userId === 'PREMIUM' && u.ownsKey) || 
-            (m.userId === 'AFFILIATES' && u.isAffiliate)
-        );
-
         const list = document.getElementById('mailbox-items');
         const badge = document.getElementById('nav-mail-badge');
-        
-        const unreadCount = myMail.filter(m => !m.read).length;
-        if(unreadCount > 0) {
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
 
-        if(myMail.length === 0) {
-            list.innerHTML = `<div class="text-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02] mt-4">
-                <i data-lucide="mail-open" class="w-8 h-8 text-zinc-600 mx-auto mb-3"></i>
-                <p class="text-zinc-600 text-xs uppercase tracking-widest font-tech font-bold">Mailbox is empty</p>
-            </div>`;
-            lucide.createIcons();
-            return;
-        }
+        try {
+            // Backend should return mailbox items relevant to the authenticated user
+            const res = await apiFetch(`/api/mailbox`);
+            if (!res.success) throw new Error(res.error || 'Failed to fetch mailbox');
+            const myMail = Array.isArray(res.data) ? res.data : (res.data.items || []);
 
-        list.innerHTML = myMail.map(m => `
-            <div class="bg-black/60 rounded-xl border ${m.read ? 'border-white/5' : 'border-primary/40 bg-primary/5'} overflow-hidden transition-all shadow-inner">
-                <div onclick="toggleMailMessage('${m.id}')" class="p-4 cursor-pointer flex justify-between items-center hover:bg-white/5 transition-colors">
-                    <div class="flex items-center gap-3 overflow-hidden pr-2">
-                        <div class="w-2 h-2 rounded-full ${m.read ? 'bg-zinc-600' : 'bg-primary animate-pulse'} shrink-0"></div>
-                        <div class="truncate">
-                            <h4 class="font-bold text-white text-sm font-sans truncate">${m.subject}</h4>
-                            <p class="text-[10px] text-zinc-500 font-tech uppercase tracking-widest mt-0.5">From: ${m.sender} &bull; ${new Date(m.date).toLocaleDateString()}</p>
+            const unreadCount = myMail.filter(m => !m.read).length;
+            if(unreadCount > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if(myMail.length === 0) {
+                list.innerHTML = `<div class="text-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02] mt-4">
+                    <i data-lucide="mail-open" class="w-8 h-8 text-zinc-600 mx-auto mb-3"></i>
+                    <p class="text-zinc-600 text-xs uppercase tracking-widest font-tech font-bold">Mailbox is empty</p>
+                </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            list.innerHTML = myMail.map(m => `
+                <div class="bg-black/60 rounded-xl border ${m.read ? 'border-white/5' : 'border-primary/40 bg-primary/5'} overflow-hidden transition-all shadow-inner">
+                    <div onclick="toggleMailMessage('${m.id}')" class="p-4 cursor-pointer flex justify-between items-center hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-3 overflow-hidden pr-2">
+                            <div class="w-2 h-2 rounded-full ${m.read ? 'bg-zinc-600' : 'bg-primary animate-pulse'} shrink-0"></div>
+                            <div class="truncate">
+                                <h4 class="font-bold text-white text-sm font-sans truncate">${m.subject}</h4>
+                                <p class="text-[10px] text-zinc-500 font-tech uppercase tracking-widest mt-0.5">From: ${m.sender} &bull; ${new Date(m.date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" id="mail-icon-${m.id}" class="w-4 h-4 text-zinc-500 transition-transform shrink-0"></i>
+                    </div>
+                    <div id="mail-content-${m.id}" class="hidden p-4 pt-2 border-t border-white/5 bg-black/80">
+                        <p class="text-zinc-300 text-sm font-serif leading-relaxed whitespace-pre-wrap">${m.message}</p>
+                        <div class="text-right mt-3">
+                            <button onclick="deleteMail('${m.id}', event)" class="text-[10px] text-red-500 hover:text-white uppercase tracking-widest font-bold transition-colors">Delete Message</button>
                         </div>
                     </div>
-                    <i data-lucide="chevron-down" id="mail-icon-${m.id}" class="w-4 h-4 text-zinc-500 transition-transform shrink-0"></i>
                 </div>
-                <div id="mail-content-${m.id}" class="hidden p-4 pt-2 border-t border-white/5 bg-black/80">
-                    <p class="text-zinc-300 text-sm font-serif leading-relaxed whitespace-pre-wrap">${m.message}</p>
-                    <div class="text-right mt-3">
-                        <button onclick="deleteMail('${m.id}', event)" class="text-[10px] text-red-500 hover:text-white uppercase tracking-widest font-bold transition-colors">Delete Message</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        lucide.createIcons();
+            `).join('');
+            lucide.createIcons();
+        } catch (err) {
+            console.error('Mailbox error:', err);
+            list.innerHTML = `<p class="text-center text-zinc-600 mt-10 text-sm font-serif italic">Unable to load mailbox.</p>`;
+        }
     }
 
     window.openReviewModal = function(orderId, productId, productName) {
@@ -370,7 +383,7 @@
         }
     });
 
-    window.submitReview = function() {
+    window.submitReview = async function() {
         const rating = parseInt(document.getElementById('review-rating').value);
         const title = document.getElementById('review-title').value.trim();
         const msg = document.getElementById('review-message').value.trim();
@@ -381,326 +394,159 @@
         if (!title || !msg) return alert("Review title and message are required.");
 
         const u = Auth.getCurrentUser();
-        const state = window.globalState || loadStoreState();
-        if (!state.reviews) state.reviews = [];
+        if (!u) return alert('You must be logged in to post a review.');
 
-        // Save Review
-        state.reviews.unshift({
-            id: 'rev_' + Date.now().toString(36),
-            orderId: orderId,
-            productId: productId,
-            userId: u.id,
-            username: u.username,
-            rating: rating,
-            title: title,
-            comment: msg,
-            dateSubmitted: new Date().toISOString(),
-            verified: true,
-            adminReply: null
-        });
+        try {
+            const payload = {
+                orderId,
+                productId,
+                userId: u.id,
+                rating,
+                title,
+                comment: msg
+            };
 
-        saveStoreState(state);
+            const res = await apiFetch('/api/reviews', { method: 'POST', body: JSON.stringify(payload) });
+            if (!res.success) {
+                throw new Error(res.error || 'Failed to submit review');
+            }
 
-        // Send Thank You Mail
-        if (typeof SystemMail !== 'undefined') {
-            SystemMail.send(
-                u.id, 
-                "Review Published", 
-                `Thank you for leaving a ${rating}-star review for your recent purchase! Your feedback helps us improve and guides other users.\n\nYour review:\n"${msg}"`,
-                "H4xStore automated system"
-            );
+            // Backend will handle notifications and verification (verified purchase, emails, etc.)
+            closeReviewModal();
+            addToast('Review published successfully! It is now live on the storefront.');
+
+            // Refresh orders/arsenal to reflect that review button is gone
+            await syncKomerzaOrders();
+        } catch (err) {
+            console.error(err);
+            addToast(err.message || 'Unable to publish review at this time.', 'error');
         }
-
-        closeReviewModal();
-        alert("Review published successfully! It is now live on the storefront.");
-        
-        // Re-render Arsenal to remove the Review button
-        syncKomerzaOrders();
     };
 
     window.showVipInstructions = function() {
         showMessageBox("To claim your VIP role:\n\n1. Go to the official H4xScripts Discord server.\n2. Navigate to the VIP panel channel.\n3. Click 'Link Account'.\n4. Submit your license key there and you're done!");
     };
 
-    async function syncKomerzaOrders() {
-        const u = Auth.getCurrentUser();
-        document.getElementById('username-display').textContent = u.username;
 
-        if (u.isAffiliate) {
-            document.getElementById('nav-affiliate-tab').classList.remove('hidden');
-            document.getElementById('affiliate-quick-access').classList.remove('hidden');
+
+    // Backend-driven dashboard overrides: replace client-side Komerza interactions with backend APIs
+async function syncKomerzaOrders() {
+    try {
+        const u = Auth.getCurrentUser();
+        document.getElementById('username-display').textContent = u ? (u.username || 'User') : 'User';
+        const targetEmail = u && (u.checkoutEmail || u.email);
+        if (!targetEmail) {
+            document.getElementById('transactions-container').innerHTML = `<div class="tech-card p-12 rounded-3xl text-center border-dashed border-2 border-white/10"><h3 class="text-xl font-fantasy text-white tracking-wider mb-2">No Transactions Found</h3><p class="text-zinc-500 font-sans text-sm">No email associated with this account.</p></div>`;
+            return;
         }
 
-        try {
-            const STORE_ID = await window.getKomerzaStoreId();
-            if(!STORE_ID) throw new Error("Could not authenticate API Key and find Store ID");
+        const ordersRes = await apiFetch(`/api/orders?email=${encodeURIComponent(targetEmail)}&limit=50`);
+        const orders = ordersRes.success ? (Array.isArray(ordersRes.data) ? ordersRes.data : (ordersRes.data.orders || [])) : [];
 
-            const targetEmail = u.checkoutEmail || u.email;
-            let myOrders = [];
+        const revRes = await apiFetch(`/api/reviews?userId=${encodeURIComponent(u && u.id)}`);
+        const existingReviews = revRes.success ? (Array.isArray(revRes.data) ? revRes.data : (revRes.data.reviews || [])) : [];
 
-            if (targetEmail && targetEmail.includes('@')) {
-                const ordersResponse = await fetch(`https://api.komerza.com/stores/${STORE_ID}/orders?filters=email==${encodeURIComponent(targetEmail)}&PageSize=50`, {
-                    headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-                });
+        const transactionsContainer = document.getElementById('transactions-container');
+        const arsenalContainer = document.getElementById('arsenal-container');
+        transactionsContainer.innerHTML = '';
+        arsenalContainer.innerHTML = '';
 
-                if (ordersResponse.ok) {
-                    const ordersData = await ordersResponse.json();
-                    
-                    // Client-Side Deduplication & Status Filter: Guarantees exactly ONE billing entry per real order.
-                    // We also explicitly remove pending/abandoned checkouts to prevent "fake" duplicate orders showing.
-                    const uniqueOrdersMap = new Map();
-                    const validStatuses = ['delivered', 'completed', 'paid', 'success', 'undeliverable', 'refunded', 'chargeback'];
-                    
-                    (ordersData.data || []).forEach(o => {
-                        const oEmail = (o.customerEmail || "").toLowerCase().trim();
-                        const tEmail = targetEmail.toLowerCase().trim();
-                        const currEmail = (u.email || "").toLowerCase().trim();
-                        const lowerStatus = (o.status || "").toLowerCase();
-                        
-                        // Strict matching filter
-                        if ((oEmail === tEmail || (currEmail && oEmail === currEmail)) && validStatuses.includes(lowerStatus)) {
-                            uniqueOrdersMap.set(o.id, o);
-                        }
-                    });
+        let totalSpentVal = 0;
+        if (orders.length === 0) {
+            transactionsContainer.innerHTML = `<div class="tech-card p-12 rounded-3xl text-center border-dashed border-2 border-white/10"><i data-lucide="ghost" class="w-12 h-12 text-zinc-600 mx-auto mb-4"></i><h3 class="text-xl font-fantasy text-white tracking-wider mb-2">No Transactions Found</h3><p class="text-zinc-500 font-sans text-sm">Your billing ledger is empty. Time to hit the store.</p></div>`;
+            arsenalContainer.innerHTML = `<p class="text-zinc-500 italic font-serif col-span-2">No active licenses found on this account.</p>`;
+        } else {
+            orders.forEach(order => {
+                const date = new Date(order.dateCreated || order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                const amount = order.amountPaid || order.amount || order.total || 0;
+                const currency = order.currencyCode || order.currency || 'USD';
+                const status = order.status || 'Completed';
+                const gateway = order.gateway || 'System';
+                const orderIdShort = order.id ? String(order.id).split('-')[0].toUpperCase() : 'N/A';
+                const parsedAmount = parseFloat(amount) || 0;
+                const lowerStatus = (status || '').toLowerCase();
+                if (['completed','paid','delivered','success'].includes(lowerStatus)) totalSpentVal += parsedAmount;
 
-                    const filteredOrders = Array.from(uniqueOrdersMap.values());
+                const orderSummary = (order.items || []).map(i => `${i.quantity||1}x ${i.productName||i.name||'Product'}`).join(', ') || 'Empty Order';
 
-                    // Fetch the full order details. This is necessary because Komerza embeds the ACTUAL KEYS in the full payload.
-                    myOrders = await Promise.all(filteredOrders.map(async (so) => {
-                        try {
-                            const fullRes = await fetch(`https://api.komerza.com/stores/${STORE_ID}/orders/${so.id}`, {
-                                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
-                            });
-                            if (fullRes.ok) {
-                                const fullData = await fullRes.json();
-                                return fullData.data.order;
-                            }
-                        } catch(err) {
-                            console.warn('Failed to fetch full order details for', so.id, err);
-                        }
-                        return so;
-                    }));
-                }
-            }
-            
-            const transactionsContainer = document.getElementById('transactions-container');
-            const arsenalContainer = document.getElementById('arsenal-container');
-            
-            transactionsContainer.innerHTML = ''; 
-            arsenalContainer.innerHTML = '';
+                const statusBadge = (['completed','paid','delivered','success'].includes(lowerStatus)) ? `<span class="bg-success/20 text-success border border-success/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full">${status}</span>` : `<span class="bg-primary/20 text-primary border border-primary/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full">${status}</span>`;
 
-            // Load global state to check existing reviews
-            const state = window.globalState || loadStoreState();
-            const existingReviews = state.reviews || [];
-
-            let totalSpentVal = 0;
-
-            if(myOrders && myOrders.length > 0) {
-              
-              // Sort newest first
-              myOrders.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-
-              myOrders.forEach(order => {
-                  const date = new Date(order.dateCreated).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-                  const amount = order.amountPaid || order.amount || 0;
-                  const currency = order.currencyCode || 'USD';
-                  const status = order.status || 'Completed';
-                  const gateway = order.gateway || 'System';
-                  const orderIdShort = order.id ? order.id.split('-')[0].toUpperCase() : 'N/A';
-                  
-                  const parsedAmount = parseFloat(amount) || 0;
-                  const lowerStatus = status.toLowerCase();
-                  
-                  if (['completed', 'paid', 'delivered', 'success'].includes(lowerStatus)) {
-                      totalSpentVal += parsedAmount;
-                  }
-
-                  let statusBadge = '';
-                  if (['completed', 'paid', 'delivered', 'success'].includes(lowerStatus)) {
-                      statusBadge = `<span class="bg-success/20 text-success border border-success/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-[0_0_10px_rgba(0,255,136,0.2)]"><i class="fa-solid fa-check mr-1"></i> ${status}</span>`;
-                  } else if (lowerStatus === 'undeliverable') {
-                      statusBadge = `<span class="bg-orange-500/20 text-orange-500 border border-orange-500/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${status}</span>`;
-                  } else {
-                      statusBadge = `<span class="bg-primary/20 text-primary border border-primary/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-3 py-1 rounded-full"><i class="fa-solid fa-xmark mr-1"></i> ${status}</span>`;
-                  }
-
-                  let orderSummary = "Empty Order";
-                  if (order.items && order.items.length > 0) {
-                       orderSummary = order.items.map(i => {
-                           const vName = i.variantName && i.variantName !== "Default Title" && i.variantName !== "Default" ? ` - ${i.variantName}` : '';
-                           return `${i.quantity || 1}x ${i.productName}${vName}`;
-                       }).join(', ');
-                  }
-
-                  // Render exactly ONE Billing History Entry per Order ID
-                  transactionsContainer.innerHTML += `
+                transactionsContainer.innerHTML += `
                     <div class="tech-card rounded-[1.5rem] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-white/5 hover:border-primary/30 transition-all group">
                       <div class="flex flex-col gap-1 w-full md:w-auto">
                         <span class="text-[10px] font-tech text-zinc-500 tracking-[0.2em]">ORDER ID #${orderIdShort} • ${date}</span>
                         <span class="text-lg font-bold font-fantasy tracking-wider text-white group-hover:text-primary transition-colors truncate max-w-[200px] md:max-w-[300px]" title="${orderSummary}">${orderSummary}</span>
                       </div>
-                      
                       <div class="flex flex-col gap-1 w-full md:w-auto">
                         <span class="text-[10px] font-tech text-zinc-500 tracking-[0.2em]">GATEWAY</span>
-                        <span class="text-sm font-sans text-zinc-300 capitalize flex items-center gap-2">
-                          <i data-lucide="credit-card" class="w-4 h-4 text-primary/70"></i> ${gateway}
-                        </span>
+                        <span class="text-sm font-sans text-zinc-300 capitalize flex items-center gap-2"><i data-lucide="credit-card" class="w-4 h-4 text-primary/70"></i> ${gateway}</span>
                       </div>
-
                       <div class="flex flex-col gap-1 w-full md:w-auto md:items-end">
                         <span class="text-[10px] font-tech text-zinc-500 tracking-[0.2em]">TOTAL</span>
                         <span class="text-xl font-black font-tech text-white">${parsedAmount.toFixed(2)} <span class="text-xs text-primary">${currency}</span></span>
                       </div>
-                      
                       <div class="flex items-center justify-between w-full md:w-auto gap-4 md:ml-6 border-t md:border-t-0 border-white/10 pt-4 md:pt-0">
                         ${statusBadge}
-                        <button onclick="fetchOrderDetails('${STORE_ID}', '${order.id}')" class="p-2 bg-white/5 hover:bg-primary/20 text-zinc-400 hover:text-white rounded-xl border border-white/10 hover:border-primary/50 transition-all shadow-md group-hover:shadow-[0_0_15px_rgba(255,26,26,0.3)]">
+                        <button onclick="fetchOrderDetails('', '${order.id}')" class="p-2 bg-white/5 hover:bg-primary/20 text-zinc-400 hover:text-white rounded-xl border border-white/10 hover:border-primary/50 transition-all shadow-md group-hover:shadow-[0_0_15px_rgba(255,26,26,0.3)]">
                           <i data-lucide="external-link" class="w-4 h-4"></i>
                         </button>
                       </div>
-                    </div>
-                  `;
+                    </div>`;
 
-                  // Iterate over line items to generate Arsenal Cards correctly recognizing bulk quantites natively mapped
-                  if(order.items && order.items.length > 0) {
-                      order.items.forEach(item => {
-                          const qty = item.quantity || 1;
-                          
-                          const pName = item.productName || "Unknown Product";
-                          const vName = item.variantName && item.variantName !== "Default Title" && item.variantName !== "Default" ? item.variantName : "";
-                          
-                          const itemName = vName ? `${pName} - ${vName}` : pName;
-                          const lowerName = itemName.toLowerCase();
-                          const isLifetime = lowerName.includes('lifetime');
+                // Arsenal items
+                if (order.items && order.items.length > 0) {
+                    order.items.forEach(item => {
+                        const qty = item.quantity || 1;
+                        const pName = item.productName || item.name || 'Unknown Product';
+                        const vName = item.variantName || '';
+                        const itemName = vName ? `${pName} - ${vName}` : pName;
+                        const keyString = (item.deliveredText || item.key || 'NO-KEY-FOUND-IN-VAULT');
+                        const keyElementId = `key-${Math.random().toString(36).substr(2,9)}`;
+                        const isKeyReady = keyString && !['NO-KEY-FOUND-IN-VAULT'].includes(keyString);
 
-                          // Check if user has already reviewed this specific item variant from this order
-                          const hasReviewed = existingReviews.find(r => r.orderId === order.id && r.productId === item.variantId);
-
-                          // Extract the exact delivered items directly from the Komerza Payload mapped to this specific variant
-                          const deliveredItemsForVariant = (order.deliveredItems || []).filter(di => di.variantId === item.variantId);
-
-                          // The loop runs EXACTLY 'qty' times to generate the correct number of cards
-                          for (let i = 0; i < qty; i++) {
-                              
-                              // Precise Expiration Calculation Logic ensuring brand new purchases aren't marked as expiring
-                              let badge = `<div class="absolute -top-3 right-6 bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,255,136,0.3)]">Active</div>`;
-                              
-                              if (!isLifetime) {
-                                  let orderDate = new Date();
-                                  if (order.dateCreated) {
-                                      const parsedDate = new Date(order.dateCreated);
-                                      if (!isNaN(parsedDate.getTime())) orderDate = parsedDate;
-                                  }
-                                  
-                                  const now = new Date();
-                                  let daysActive = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
-                                  daysActive = Math.max(0, daysActive);
-                                  
-                                  let lifespan = null;
-                                  if (lowerName.includes('week') || lowerName.includes('7 day') || lowerName.includes('1w')) lifespan = 7;
-                                  else if (lowerName.includes('month') || lowerName.includes('30 day') || lowerName.includes('1m')) lifespan = 30;
-                                  
-                                  if (lifespan !== null) {
-                                      const daysRemaining = lifespan - daysActive;
-                                      if (daysRemaining <= 0) {
-                                          badge = `<div class="absolute -top-3 right-6 bg-zinc-500/20 text-zinc-400 border border-zinc-500/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-4 py-1 rounded-full">Expired</div>`;
-                                      } else if (daysRemaining <= 3) {
-                                          badge = `<div class="absolute -top-3 right-6 bg-primary/20 text-primary border border-primary/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-4 py-1 rounded-full shadow-[0_0_10px_rgba(255,26,26,0.3)]">Expiring Soon</div>`;
-                                      }
-                                  }
-                              }
-                              
-                              // Pull the precise key string DIRECTLY from Komerza's embedded payload, matching index to index
-                              const dItem = deliveredItemsForVariant[i];
-                              let keyString = "NO-KEY-FOUND-IN-VAULT";
-                              
-                              if (dItem && dItem.textContent) {
-                                  keyString = dItem.textContent;
-                              } else if (['cancelled', 'refunded', 'chargeback'].includes(lowerStatus)) {
-                                  keyString = "REVOKED";
-                                  badge = `<div class="absolute -top-3 right-6 bg-primary/20 text-primary border border-primary/50 text-[10px] font-black font-fantasy uppercase tracking-[0.2em] px-4 py-1 rounded-full shadow-[0_0_10px_rgba(255,26,26,0.3)]">Cancelled</div>`;
-                              } else if (['delivered', 'success', 'completed', 'paid'].includes(lowerStatus)) {
-                                  keyString = "WAITING ON STOCK"; 
-                              } else if (lowerStatus === 'undeliverable') {
-                                  keyString = "UNDELIVERABLE-ISSUE";
-                              }
-
-                              const keyElementId = `key-${Math.random().toString(36).substr(2,9)}`;
-                              const isKeyReady = !['NO-KEY-FOUND-IN-VAULT', 'REVOKED', 'WAITING ON STOCK', 'UNDELIVERABLE-ISSUE'].includes(keyString);
-                              
-                              arsenalContainer.innerHTML += `
-                                <div class="tech-card rounded-[2.5rem] p-8 flex flex-col relative">
-                                  ${badge}
-                                  <h3 class="text-2xl font-bold font-fantasy text-white uppercase tracking-wider mb-4">${itemName}</h3>
-                                  
-                                  <div class="bg-black/60 p-4 rounded-xl border border-white/10 mb-6 flex justify-between items-center group hover:border-primary/50 transition-all">
-                                    <div id="${keyElementId}" class="font-tech ${isKeyReady ? 'text-zinc-300' : 'text-primary'} text-sm tracking-widest overflow-hidden text-ellipsis">${keyString}</div>
-                                    <button onclick="copyDynamicKey('${keyElementId}')" class="text-zinc-500 hover:text-primary transition-colors p-2"><i data-lucide="copy" class="w-5 h-5"></i></button>
-                                  </div>
-
-                                  <div class="mt-auto space-y-3">
-                                    <button onclick="copyLoaderScript('${keyElementId}')" class="glow-btn w-full py-3 bg-white/10 hover:bg-primary text-white rounded-xl font-bold font-fantasy text-xs uppercase tracking-[0.2em] border border-white/20 transition-all flex items-center justify-center gap-2">
-                                      <i data-lucide="download" class="w-4 h-4"></i> Download Loader
-                                    </button>
-                                    <button onclick="showVipInstructions()" class="w-full py-3 bg-[#5865F2]/20 hover:bg-[#5865F2] text-white rounded-xl font-bold font-sans text-xs uppercase tracking-[0.1em] border border-[#5865F2]/50 transition-all flex items-center justify-center gap-2">
-                                      <i class="fa-brands fa-discord"></i> Claim VIP Role
-                                    </button>
-                                    ${!hasReviewed && isKeyReady ? `
-                                    <button onclick="openReviewModal('${order.id}', '${item.variantId}', '${itemName.replace(/'/g, "\\'")}')" class="w-full py-3 bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl font-bold font-sans text-xs uppercase tracking-[0.1em] border border-yellow-500/50 transition-all flex items-center justify-center gap-2 mt-2 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-                                      <i data-lucide="star" class="w-4 h-4"></i> Leave a Review
-                                    </button>
-                                    ` : ''}
-                                  </div>
-                                </div>
-                              `;
-                          }
-                      });
-                  }
-              });
-            } else {
-               transactionsContainer.innerHTML = `
-                <div class="tech-card p-12 rounded-3xl text-center border-dashed border-2 border-white/10">
-                    <i data-lucide="ghost" class="w-12 h-12 text-zinc-600 mx-auto mb-4"></i>
-                    <h3 class="text-xl font-fantasy text-white tracking-wider mb-2">No Transactions Found</h3>
-                    <p class="text-zinc-500 font-sans text-sm">Your billing ledger is empty. Time to hit the store.</p>
-                </div>
-               `;
-               arsenalContainer.innerHTML = `<p class="text-zinc-500 italic font-serif col-span-2">No active licenses found on this account.</p>`;
-            }
-
-            document.getElementById('total-orders').textContent = myOrders.length.toString();
-            document.getElementById('total-spent').textContent = '$' + totalSpentVal.toFixed(2);
-            
-            lucide.createIcons();
-
-        } catch (error) {
-            console.error("Dashboard Sync Failed:", error);
-            document.getElementById('transactions-container').innerHTML = `<p class="text-primary italic font-serif bg-primary/10 p-4 border border-primary/30 rounded-xl">Failed to connect to Komerza billing API. Please try again later.</p>`;
-        }
-    }
-
-    async function fetchOrderDetails(storeId, orderId) {
-        try {
-            const response = await fetch(`https://api.komerza.com/stores/${storeId}/orders/${orderId}`, {
-                headers: { 'Authorization': `Bearer ${window.KOMERZA_API_KEY}`, 'User-Agent': 'H4xStore/1.0' }
+                        arsenalContainer.innerHTML += `
+                          <div class="tech-card rounded-[2.5rem] p-8 flex flex-col relative">
+                            <h3 class="text-2xl font-bold font-fantasy text-white uppercase tracking-wider mb-4">${itemName}</h3>
+                            <div class="bg-black/60 p-4 rounded-xl border border-white/10 mb-6 flex justify-between items-center group hover:border-primary/50 transition-all">
+                              <div id="${keyElementId}" class="font-tech ${isKeyReady ? 'text-zinc-300' : 'text-primary'} text-sm tracking-widest overflow-hidden text-ellipsis">${keyString}</div>
+                              <button onclick="copyDynamicKey('${keyElementId}')" class="text-zinc-500 hover:text-primary transition-colors p-2"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                            </div>
+                            <div class="mt-auto space-y-3">
+                              <button onclick="copyLoaderScript('${keyElementId}')" class="glow-btn w-full py-3 bg-white/10 hover:bg-primary text-white rounded-xl font-bold font-fantasy text-xs uppercase tracking-[0.2em] border border-white/20 transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Download Loader
+                              </button>
+                            </div>
+                          </div>`;
+                    });
+                }
             });
-            if (!response.ok) throw new Error('Failed to fetch specific order details');
-            const payload = await response.json();
-            const order = payload.data.order;
-            
-            const totalItemsCount = order.items ? order.items.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
-            
-            const receipt = `RECEIPT: ${order.id}\n------------------------------------\nItems Purchased: ${totalItemsCount}\nIP Address: ${payload.data.ipInfo?.ipAddress || 'Secured'}\nTotal: ${order.amount} ${order.currencyCode}\nStatus: ${order.status}`;
-            
-            showMessageBox(receipt);
-            
-        } catch(err) {
-            showMessageBox('Encountered an error while opening receipt. Check console.');
-            console.error(err);
-        }
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('total-orders').textContent = String(orders.length);
+            document.getElementById('total-spent').textContent = '$' + totalSpentVal.toFixed(2);
+            lucide.createIcons();
+        }
+    } catch (err) {
+        console.error('Backend dashboard sync failed', err);
+        document.getElementById('transactions-container').innerHTML = `<p class="text-primary italic font-serif bg-primary/10 p-4 border border-primary/30 rounded-xl">Failed to load dashboard data.</p>`;
+    }
+}
+
+async function fetchOrderDetails(storeId, orderId) {
+    try {
+        const resp = await apiFetch(`/api/orders/${orderId}`);
+        if (!resp.success) throw new Error(resp.error || 'Failed to fetch order');
+        const order = resp.data.order || resp.data;
+        const totalItemsCount = order.items ? order.items.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
+        const ip = (order.ipInfo && order.ipInfo.ipAddress) || order.ipAddress || 'Secured';
+        const receipt = `RECEIPT: ${order.id}\n------------------------------------\nItems Purchased: ${totalItemsCount}\nIP Address: ${ip}\nTotal: ${order.amount || order.total || 0} ${order.currencyCode || order.currency}\nStatus: ${order.status || 'N/A'}`;
+        showMessageBox(receipt);
+    } catch (err) {
+        console.error('Failed to fetch order details', err);
+        showMessageBox('Encountered an error while opening receipt. Check console.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
         const initInterval = setInterval(() => {
             if (typeof Auth !== 'undefined' && typeof window.getKomerzaStoreId !== 'undefined') {
                 clearInterval(initInterval);
@@ -735,3 +581,11 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
