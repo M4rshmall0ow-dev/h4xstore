@@ -3,7 +3,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 
-/
+/**
  * Mocked createCheckout. In a real integration this would call Komerza API.
  * Returns a checkout URL and a komerzaId (checkout id)
  */
@@ -40,7 +40,7 @@ function verifyWebhookSignature(rawBody, signatureHeader, secret) {
   }
 }
 
-/
+/**
  * Handle webhook payloads from Komerza. Expected shape (example):
  * { id: 'evt_...', type: 'checkout.paid', data: { komerzaId: 'kmz_xxx', amount: '9.99', currency: 'USD', metadata: { orderId } } }
  * The function will return { status: 'ok' } when processed or { status: 'ignored' } when nothing to do.
