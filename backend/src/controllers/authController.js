@@ -1,4 +1,4 @@
-﻿const prisma = require('../database/prismaClient');
+const prisma = require('../database/prismaClient');
 const { hashPassword, verifyPassword } = require('../utils/hash');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../auth/jwt');
 const { v4: uuidv4 } = require('uuid');
@@ -81,11 +81,6 @@ async function login(req, res, next) {
     const accessToken = signAccessToken(buildAuthPayload(user, { role: userRole, ownsKey, isAffiliate }));
     const refreshToken = signRefreshToken({ sub: user.id });
 
-    const roleNames = roleEntries.map(entry => entry.role.name.toLowerCase());
-    const userRole = roleNames.includes('admin') ? 'admin' : roleNames[0] || 'user';
-    const ownsKey = paidOrdersCount > 0;
-    const isAffiliate = !!affiliateEntry;
-
     const expiresAt = new Date(Date.now() + config.refreshExpiresIn * 1000);
     await prisma.session.create({ data: { userId: user.id, refreshToken, expiresAt } });
 
@@ -138,11 +133,6 @@ async function discordOAuth(req, res, next) {
 
     const accessToken = signAccessToken(buildAuthPayload(user, { role: userRole, ownsKey, isAffiliate }));
     const refreshToken = signRefreshToken({ sub: user.id });
-
-    const roleNames = roleEntries.map(entry => entry.role.name.toLowerCase());
-    const userRole = roleNames.includes('admin') ? 'admin' : roleNames[0] || 'user';
-    const ownsKey = paidOrdersCount > 0;
-    const isAffiliate = !!affiliateEntry;
 
     const expiresAt = new Date(Date.now() + config.refreshExpiresIn * 1000);
     await prisma.session.create({ data: { userId: user.id, refreshToken, expiresAt } });
@@ -283,4 +273,6 @@ async function me(req, res, next) {
 }
 
 module.exports = { register, login, discordOAuth, refresh, logout, forgotPassword, resetPassword, changePassword, me };
+
+
 
