@@ -72,5 +72,13 @@ async function getOrder(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createOrder, getOrder };
+async function listOrders(req, res, next) {
+  try {
+    const where = req.user.roles.includes('Admin') ? {} : { userId: req.user.id };
+    const orders = await prisma.order.findMany({ where, include: { items: true }, orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, data: orders });
+  } catch (err) { next(err); }
+}
+
+module.exports = { createOrder, getOrder, listOrders };
 
