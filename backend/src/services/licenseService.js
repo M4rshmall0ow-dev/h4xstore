@@ -1,6 +1,6 @@
 ﻿const logger = require('../utils/logger');
 
-/
+/*
  * assignKeysForOrder(orderId, prismaTxClient)
  * - prismaTxClient: a Prisma transaction client (tx) passed from $transaction
  * - scans order items and assigns available license keys for products referenced
