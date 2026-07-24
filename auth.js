@@ -1,8 +1,10 @@
-const API_BASE = window.API_BASE || (window.location.hostname === "localhost"
-  ? "http://localhost:3000"
-  : "https://YOUR_BACKEND_DOMAIN");
+if (typeof window.API_BASE === 'undefined') {
+  window.API_BASE = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://YOUR_BACKEND_DOMAIN";
+}
 
-window.API_BASE = API_BASE;
+var API_BASE = window.API_BASE;
 
 function sanitizeInput(input) {
   if (typeof input === 'string') {

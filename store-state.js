@@ -4,11 +4,13 @@
  * ==============================================================================
  */
 
-const API_BASE = window.API_BASE || (window.location.hostname === "localhost"
+if (typeof window.API_BASE === 'undefined') {
+  window.API_BASE = window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : window.location.origin);
+    : window.location.origin;
+}
 
-window.API_BASE = API_BASE;
+var API_BASE = window.API_BASE;
 
 let CACHED_STORE_ID = null;
 async function getKomerzaStoreId() {
