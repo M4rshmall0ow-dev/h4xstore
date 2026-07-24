@@ -91,7 +91,7 @@ console.log('__dirname:', __dirname);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
 
-if (process.env.NODE_ENV !== 'test') {
+if (require.main === module) {
   app.listen(port, () => {
     logger.info(`Server running on port ${port}`);
   });
