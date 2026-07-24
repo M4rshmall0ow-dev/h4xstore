@@ -1,6 +1,6 @@
-﻿const API_BASE = window.location.hostname === "localhost"
+const API_BASE = window.API_BASE || (window.location.hostname === "localhost"
   ? "http://localhost:3000"
-  : "https://YOUR_BACKEND_DOMAIN";
+  : "https://YOUR_BACKEND_DOMAIN");
 
 window.API_BASE = API_BASE;
 

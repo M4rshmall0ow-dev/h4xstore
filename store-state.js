@@ -4,9 +4,9 @@
  * ==============================================================================
  */
 
-const API_BASE = window.location.hostname === "localhost"
+const API_BASE = window.API_BASE || (window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : window.location.origin;
+    : window.location.origin);
 
 window.API_BASE = API_BASE;
 
