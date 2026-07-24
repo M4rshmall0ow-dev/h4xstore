@@ -1,3 +1,22 @@
+process.on('uncaughtException', (err) => {
+  console.error('CRASH uncaughtException:', err.stack || err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('CRASH unhandledRejection:', err);
+  process.exit(1);
+});
+
+console.log('BOOTING SERVER...');
+
+const path = require('path');
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+
 const config = require('./config');
 console.log("Loaded config");
 
@@ -16,21 +35,6 @@ console.log("Loaded auth route");
 const userRoutes = require('./routes/users');
 console.log("Loaded user route");
 
-const prisma = require('./database/prismaClient');
-console.log("Loaded prisma");
-
-const path = require('path');
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
-const config = require('./config');
-const logger = require('./utils/logger');
-const apiLimiter = require('./middleware/rateLimiter');
-const errorHandler = require('./middleware/errorHandler');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
 const roleRoutes = require('./routes/roles');
 const permissionRoutes = require('./routes/permissions');
 const webhooksRoutes = require('./routes/webhooks');
@@ -44,7 +48,9 @@ const reviewsRoutes = require('./routes/reviews');
 const affiliatesRoutes = require('./routes/affiliates');
 const analyticsRoutes = require('./routes/analytics');
 const partnersRoutes = require('./routes/partners');
+
 const prisma = require('./database/prismaClient');
+console.log("Loaded prisma");
 
 const app = express();
 
