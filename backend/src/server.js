@@ -1,3 +1,11 @@
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
@@ -77,6 +85,12 @@ app.get('*', (req, res, next) => {
 app.use(errorHandler);
 
 const port = config.port;
+console.log('Startup debug:');
+console.log('cwd:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
     logger.info(`Server running on port ${port}`);
