@@ -51,7 +51,9 @@ app.use('/api/affiliates', affiliatesRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/partners', partnersRoutes);
 
-const frontendDir = path.join(__dirname, '../..');
+const frontendDir = path.resolve(__dirname, '..', '..');
+logger.info(`Serving frontend static files from ${frontendDir}`);
+console.log(`DEBUG: Frontend static files are being served from ${frontendDir}`);
 app.use(express.static(frontendDir));
 
 app.get('/_health', async (req, res) => {
