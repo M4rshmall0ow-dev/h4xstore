@@ -1,323 +1,309 @@
 generator client {
-provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-provider = "postgresql"
-url = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// NOTE: This schema is a comprehensive starting point. Adjust datatypes and indexes for your deployment.
-
 model User {
-id String @id @default(uuid())
-email String @unique
-username String? @unique
-password String
-displayName String?
-roles UserRole[]
-sessions Session[]
-reviews Review[]
-reviewReplies ReviewReply[]
-mailbox Mailbox[] @relation("MailboxOwner")
-affiliates Affiliate[]
-orders Order[]
-licenseKeys LicenseKey[]
-passwordResets PasswordReset[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-isVerified Boolean @default(false)
-isSuspended Boolean @default(false)
-// password reset token
-resetToken String?
-resetExpires DateTime?
+  id             String          @id @default(uuid())
+  username       String?         @unique
+  email          String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  displayName    String?
+  isSuspended    Boolean         @default(false)
+  isVerified     Boolean         @default(false)
+  password       String
+  resetExpires   DateTime?
+  resetToken     String?
+  affiliates     Affiliate[]
+  licenseKeys    LicenseKey[]
+  mailbox        Mailbox[]       @relation("MailboxOwner")
+  orders         Order[]
+  passwordResets PasswordReset[]
+  reviews        Review[]
+  reviewReplies  ReviewReply[]
+  sessions       Session[]
+  roles          UserRole[]
 }
 
 model Role {
-id String @id @default(uuid())
-name String @unique
-description String?
-permissions RolePermission[]
-userRoles UserRole[]
-createdAt DateTime @default(now())
+  id          String           @id @default(uuid())
+  name        String           @unique
+  createdAt   DateTime         @default(now())
+  description String?
+  permissions RolePermission[]
+  userRoles   UserRole[]
 }
 
 model Permission {
-id String @id @default(uuid())
-name String @unique
-description String?
-roles RolePermission[]
+  id          String           @id @default(uuid())
+  description String?
+  name        String           @unique
+  roles       RolePermission[]
 }
 
 model RolePermission {
-id String @id @default(uuid())
-role Role @relation(fields: [roleId], references: [id])
-roleId String
-permission Permission @relation(fields: [permissionId], references: [id])
-permissionId String
-createdAt DateTime @default(now())
-@@unique([roleId, permissionId])
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+  id           String     @id @default(uuid())
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
+
+  @@unique([roleId, permissionId])
 }
 
 model UserRole {
-id String @id @default(uuid())
-user User @relation(fields: [userId], references: [id])
-userId String
-role Role @relation(fields: [roleId], references: [id])
-roleId String
-assignedAt DateTime @default(now())
-@@unique([userId, roleId])
+  id         String   @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  role       Role     @relation(fields: [roleId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, roleId])
 }
 
 model Session {
-id String @id @default(uuid())
-user User @relation(fields: [userId], references: [id])
-userId String
-refreshToken String @unique
-ip String?
-userAgent String?
-createdAt DateTime @default(now())
-expiresAt DateTime
-revoked Boolean @default(false)
-revokedAt DateTime?
-@@index([userId])
+  id           String    @id @default(uuid())
+  userId       String
+  refreshToken String    @unique
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  ip           String?
+  revoked      Boolean   @default(false)
+  revokedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Product {
-id String @id @default(uuid())
-sku String? @unique
-name String
-description String?
-price Decimal
-currency String @default("USD")
-featured Boolean @default(false)
-visible Boolean @default(true)
-images Json?
-categories String[]
-variants ProductVariant[]
-inventory Inventory?
-reviews Review[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  id          String           @id @default(uuid())
+  name        String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  categories  String[]
+  currency    String           @default("USD")
+  description String?
+  featured    Boolean          @default(false)
+  images      Json?
+  price       Decimal
+  sku         String?          @unique
+  visible     Boolean          @default(true)
+  inventory   Inventory?
+  variants    ProductVariant[]
+  reviews     Review[]
 }
 
 model ProductVariant {
-id String @id @default(uuid())
-product Product @relation(fields: [productId], references: [id])
-productId String
-sku String? @unique
-name String?
-price Decimal?
-stock Int @default(0)
-meta Json?
+  id        String   @id @default(uuid())
+  productId String
+  name      String?
+  price     Decimal?
+  meta      Json?
+  sku       String?  @unique
+  stock     Int      @default(0)
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Inventory {
-id String @id @default(uuid())
-product Product @relation(fields: [productId], references: [id])
-productId String @unique
-stock Int @default(0)
-reserved Int @default(0)
-updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid())
+  stock     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  productId String   @unique
+  reserved  Int      @default(0)
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Order {
-id String @id @default(uuid())
-user User? @relation(fields: [userId], references: [id])
-userId String?
-total Decimal
-currency String @default("USD")
-status String @default("pending")
-items OrderItem[]
-receipt Json?
-komerzaId String? @unique
-affiliateSales AffiliateSale[]
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-@@index([komerzaId])
+  id             String          @id @default(uuid())
+  userId         String?
+  status         String          @default("pending")
+  komerzaId      String?         @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  currency       String          @default("USD")
+  receipt        Json?
+  total          Decimal
+  affiliateSales AffiliateSale[]
+  user           User?           @relation(fields: [userId], references: [id])
+  items          OrderItem[]
+
+  @@index([komerzaId])
 }
 
 model OrderItem {
-id String @id @default(uuid())
-order Order @relation(fields: [orderId], references: [id])
-orderId String
-productId String?
-variantId String?
-name String
-sku String?
-price Decimal
-quantity Int
+  id        String  @id @default(uuid())
+  orderId   String
+  variantId String?
+  quantity  Int
+  price     Decimal
+  name      String
+  productId String?
+  sku       String?
+  order     Order   @relation(fields: [orderId], references: [id])
 }
 
 model LicenseKey {
-id String @id @default(uuid())
-key String @unique
-productId String?
-orderId String?
-assignedTo User? @relation(fields: [assignedToId], references: [id])
-assignedToId String?
-used Boolean @default(false)
-usedAt DateTime?
-reserved Boolean @default(false)
-reservedAt DateTime?
+  id           String    @id @default(uuid())
+  orderId      String?
+  assignedToId String?
+  key          String    @unique
+  productId    String?
+  reserved     Boolean   @default(false)
+  reservedAt   DateTime?
+  used         Boolean   @default(false)
+  usedAt       DateTime?
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
 }
 
 model Review {
-id String @id @default(uuid())
-user User @relation(fields: [userId], references: [id])
-userId String
-product Product @relation(fields: [productId], references: [id])
-productId String
-rating Int
-title String?
-body String?
-verified Boolean @default(false)
-replies ReviewReply[]
-createdAt DateTime @default(now())
+  id        String        @id @default(uuid())
+  userId    String
+  rating    Int
+  title     String?
+  verified  Boolean       @default(false)
+  body      String?
+  createdAt DateTime      @default(now())
+  productId String
+  product   Product       @relation(fields: [productId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+  replies   ReviewReply[]
 }
 
 model ReviewReply {
-id String @id @default(uuid())
-review Review @relation(fields: [reviewId], references: [id])
-reviewId String
-user User @relation(fields: [userId], references: [id])
-userId String
-body String
-createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  reviewId  String
+  userId    String
+  createdAt DateTime @default(now())
+  body      String
+  review    Review   @relation(fields: [reviewId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Mailbox {
-id String @id @default(uuid())
-owner User @relation("MailboxOwner", fields: [ownerId], references: [id])
-ownerId String
-subject String
-body String
-isRead Boolean @default(false)
-attachments MailAttachment[]
-createdAt DateTime @default(now())
+  id          String           @id @default(uuid())
+  subject     String
+  createdAt   DateTime         @default(now())
+  body        String
+  isRead      Boolean          @default(false)
+  ownerId     String
+  attachments MailAttachment[]
+  owner       User             @relation("MailboxOwner", fields: [ownerId], references: [id])
 }
 
 model MailAttachment {
-id String @id @default(uuid())
-mailbox Mailbox @relation(fields: [mailboxId], references: [id])
-mailboxId String
-filename String
-mimeType String
-size Int
-url String
+  id        String  @id @default(uuid())
+  filename  String
+  mailboxId String
+  mimeType  String
+  size      Int
+  url       String
+  mailbox   Mailbox @relation(fields: [mailboxId], references: [id])
 }
 
 model Affiliate {
-id String @id @default(uuid())
-user User? @relation(fields: [userId], references: [id])
-userId String?
-code String @unique
-meta Json?
-clicks AffiliateClick[]
-sales AffiliateSale[]
-withdrawals AffiliateWithdrawal[]
-createdAt DateTime @default(now())
+  id          String                @id @default(uuid())
+  userId      String?
+  createdAt   DateTime              @default(now())
+  code        String                @unique
+  user        User?                 @relation(fields: [userId], references: [id])
+  clicks      AffiliateClick[]
+  sales       AffiliateSale[]
+  withdrawals AffiliateWithdrawal[]
 }
 
 model AffiliateClick {
-id String @id @default(uuid())
-affiliate Affiliate @relation(fields: [affiliateId], references: [id])
-affiliateId String
-ip String?
-userAgent String?
-createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  affiliateId String
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  ip          String?
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
 model AffiliateSale {
-id String @id @default(uuid())
-affiliate Affiliate @relation(fields: [affiliateId], references: [id])
-affiliateId String
-order Order? @relation(fields: [orderId], references: [id])
-orderId String?
-commission Decimal
-createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  affiliateId String
+  orderId     String?
+  commission  Decimal
+  createdAt   DateTime  @default(now())
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  order       Order?    @relation(fields: [orderId], references: [id])
 }
 
 model AffiliateWithdrawal {
-id String @id @default(uuid())
-affiliate Affiliate @relation(fields: [affiliateId], references: [id])
-affiliateId String
-amount Decimal
-currency String? @default("USD")
-address String?
-reason String?
-status String @default("pending")
-createdAt DateTime @default(now())
-completedAt DateTime?
+  id          String    @id @default(uuid())
+  affiliateId String
+  amount      Decimal
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
 }
 
 model Coupon {
-id String @id @default(uuid())
-code String @unique
-discountPct Int
-expiresAt DateTime?
-uses Int @default(0)
+  id          String    @id @default(uuid())
+  code        String    @unique
+  discountPct Int
+  expiresAt   DateTime?
+  uses        Int       @default(0)
 }
 
 model AuditLog {
-id String @id @default(uuid())
-actorId String?
-actorType String?
-action String
-meta Json?
-createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  action    String
+  actorId   String?
+  actorType String?
+  createdAt DateTime @default(now())
+  meta      Json?
 }
 
 model Announcement {
-id String @id @default(uuid())
-title String
-body String
-active Boolean @default(true)
-createdAt DateTime @default(now())
-}
-
-model Media {
-id String @id @default(uuid())
-youtubeId String
-title String
-publisher String?
-createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  active    Boolean  @default(true)
+  body      String
+  title     String
 }
 
 model Partner {
-id String @id @default(uuid())
-name String
-meta Json?
+  id   String @id @default(uuid())
+  name String
+  meta Json?
 }
 
 model Statistic {
-id String @id @default(uuid())
-key String
-value Decimal
-ts DateTime @default(now())
+  id    String   @id @default(uuid())
+  key   String
+  value Decimal
+  ts    DateTime @default(now())
 }
 
 model Setting {
-id String @id @default(uuid())
-key String @unique
-value Json
+  id    String @id @default(uuid())
+  key   String @unique
+  value Json
 }
 
-// optional: add password reset tokens as separate model
 model PasswordReset {
-id String @id @default(uuid())
-user User @relation(fields: [userId], references: [id])
-userId String
-token String @unique
-expiresAt DateTime
-createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-// Webhook event tracking for idempotency (create a migration to apply)
 model WebhookEvent {
-id String @id @default(uuid())
-eventId String @unique
-source String
-payload Json?
-processedAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  source      String
+  payload     Json?
+  processedAt DateTime @default(now())
 }

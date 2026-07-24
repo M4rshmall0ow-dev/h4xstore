@@ -1,4 +1,5 @@
-﻿const express = require('express');
+const path = require('path');
+const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -50,6 +51,9 @@ app.use('/api/affiliates', affiliatesRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/partners', partnersRoutes);
 
+const frontendDir = path.join(__dirname, '../..');
+app.use(express.static(frontendDir));
+
 app.get('/_health', async (req, res) => {
   try {
     // simple db ping
@@ -58,6 +62,13 @@ app.get('/_health', async (req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: 'db unreachable' });
   }
+});
+
+app.get('*', (req, res, next) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path === '/_health') {
+    return next();
+  }
+  res.sendFile(path.join(frontendDir, 'index.html'));
 });
 
 // global error handler
