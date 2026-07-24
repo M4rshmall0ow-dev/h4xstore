@@ -23,4 +23,4 @@ COPY --from=builder /usr/src/app/backend/node_modules/.prisma ./backend/node_mod
 WORKDIR /usr/src/app/backend
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["npm", "start"]
+CMD ["sh", "-c", "echo STARTING CONTAINER && pwd && ls -la && cd /usr/src/app/backend && ls -la && npm start"]

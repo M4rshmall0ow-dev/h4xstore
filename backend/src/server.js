@@ -1,10 +1,23 @@
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err);
-});
+const config = require('./config');
+console.log("Loaded config");
 
-process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION:', err);
-});
+const logger = require('./utils/logger');
+console.log("Loaded logger");
+
+const apiLimiter = require('./middleware/rateLimiter');
+console.log("Loaded rateLimiter");
+
+const errorHandler = require('./middleware/errorHandler');
+console.log("Loaded errorHandler");
+
+const authRoutes = require('./routes/auth');
+console.log("Loaded auth route");
+
+const userRoutes = require('./routes/users');
+console.log("Loaded user route");
+
+const prisma = require('./database/prismaClient');
+console.log("Loaded prisma");
 
 const path = require('path');
 const express = require('express');
@@ -91,11 +104,9 @@ console.log('__dirname:', __dirname);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
 
-if (require.main === module) {
-  app.listen(port, () => {
-    logger.info(`Server running on port ${port}`);
-  });
-}
+app.listen(port, () => {
+  logger.info(`Server running on port ${port}`);
+});
 
 module.exports = app;
 
